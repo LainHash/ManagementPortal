@@ -87,7 +87,8 @@ export function IngredientCard({
 
         {/* Description snippet */}
         <p className="mt-1 flex-1 text-xs text-slate-500 line-clamp-2 dark:text-slate-400">
-          {ingredient.description || "Chưa có mô tả chi tiết cho nguyên liệu này."}
+          {ingredient.description ||
+            "Chưa có mô tả chi tiết cho nguyên liệu này."}
         </p>
 
         {/* Metrics: Price & Stock */}
@@ -97,7 +98,8 @@ export function IngredientCard({
               Đơn giá chi nhánh
             </span>
             <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-              {formatPrice(ingredient.unitPrice, ingredient.currency)}
+              {formatPrice(ingredient.unitPrice, ingredient.currency)}/
+              {ingredient.unitSymbol || "đơn vị"}
             </span>
           </div>
 
@@ -106,7 +108,8 @@ export function IngredientCard({
               Tồn kho khả dụng
             </span>
             <span className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
-              {ingredient.availableQuantity !== null && ingredient.availableQuantity !== undefined
+              {ingredient.availableQuantity !== null &&
+              ingredient.availableQuantity !== undefined
                 ? ingredient.availableQuantity
                 : 0}{" "}
               <span className="text-xs font-medium text-slate-400">

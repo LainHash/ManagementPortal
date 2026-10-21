@@ -27,7 +27,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
-import { STORAGE_KEYS, APP_CONFIG, APP_EVENTS } from "@/constants/app.constants";
+import {
+  STORAGE_KEYS,
+  APP_CONFIG,
+  APP_EVENTS,
+} from "@/constants/app.constants";
 import { territoryApi } from "@/features/territory/api/territory.api";
 import type { BranchResponse } from "@/types/territory.types";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
@@ -101,7 +105,10 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
     window.addEventListener("storage", handleBranchChanged);
 
     return () => {
-      window.removeEventListener(APP_EVENTS.BRANCH_CHANGED, handleBranchChanged);
+      window.removeEventListener(
+        APP_EVENTS.BRANCH_CHANGED,
+        handleBranchChanged,
+      );
       window.removeEventListener("storage", handleBranchChanged);
     };
   }, []);
@@ -115,7 +122,10 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
         const matched = branches.find((b) => b.id === newBranchId);
         if (matched) {
           branchCode = matched.branchCode;
-          localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_CODE, matched.branchCode);
+          localStorage.setItem(
+            STORAGE_KEYS.SELECTED_BRANCH_CODE,
+            matched.branchCode,
+          );
         }
       } else {
         localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCH_ID);
@@ -125,7 +135,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
       window.dispatchEvent(
         new CustomEvent(APP_EVENTS.BRANCH_CHANGED, {
           detail: { branchId: newBranchId, branchCode },
-        })
+        }),
       );
     }
   };
@@ -232,7 +242,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
       title: "Hệ thống & Tài khoản",
       items: [
         {
-          label: "Tài khoản nhân sự",
+          label: "Người dùng",
           href: "/users",
           icon: Users,
         },
@@ -261,9 +271,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           "fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-white transition-all duration-300 dark:border-slate-800 dark:bg-slate-950 md:sticky md:z-30",
           isCollapsed ? "w-18" : "w-64",
           // Mobile responsive slide-in
-          isMobileOpen
-            ? "translate-x-0"
-            : "-translate-x-full md:translate-x-0"
+          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         {/* Brand / Header */}
@@ -331,7 +339,8 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                 <option value="">-- Toàn hệ thống (Tất cả) --</option>
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    [{b.branchCode}] {b.address ? `${b.address} (${b.city})` : b.city}
+                    [{b.branchCode}]{" "}
+                    {b.address ? `${b.address} (${b.city})` : b.city}
                   </option>
                 ))}
               </select>
@@ -365,7 +374,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                 "group relative mx-auto flex h-10 w-10 items-center justify-center rounded-xl transition-all shadow-2xs",
                 activeBranch
                   ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40"
-                  : "bg-slate-100 text-slate-500 hover:bg-slate-200/70 dark:bg-slate-900 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200/70 dark:bg-slate-900 dark:text-slate-400 border border-slate-200 dark:border-slate-800",
               )}
               title={
                 activeBranch
@@ -391,7 +400,8 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                 <option value="">-- Toàn hệ thống (Tất cả) --</option>
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    [{b.branchCode}] {b.address ? `${b.address} (${b.city})` : b.city}
+                    [{b.branchCode}]{" "}
+                    {b.address ? `${b.address} (${b.city})` : b.city}
                   </option>
                 ))}
               </select>
@@ -440,7 +450,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                           isActive
                             ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 font-semibold"
                             : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-slate-200",
-                          isCollapsed && "justify-center px-2"
+                          isCollapsed && "justify-center px-2",
                         )}
                       >
                         <Icon
@@ -448,7 +458,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                             "h-5 w-5 shrink-0 transition-transform group-hover:scale-105",
                             isActive
                               ? "text-indigo-600 dark:text-indigo-400"
-                              : "text-slate-500 dark:text-slate-400"
+                              : "text-slate-500 dark:text-slate-400",
                           )}
                         />
                         {!isCollapsed && (
@@ -492,7 +502,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
             <div
               className={cn(
                 "flex items-center gap-3 rounded-xl bg-slate-50 p-2 dark:bg-slate-900/80",
-                isCollapsed ? "justify-center p-1.5" : ""
+                isCollapsed ? "justify-center p-1.5" : "",
               )}
             >
               <Link
@@ -543,7 +553,7 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
                 onClick={onCloseMobile}
                 className={cn(
                   "flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors",
-                  isCollapsed ? "justify-center px-2" : "justify-center"
+                  isCollapsed ? "justify-center px-2" : "justify-center",
                 )}
                 title="Đăng nhập tài khoản"
               >
