@@ -20,12 +20,16 @@ import {
   Wheat,
   MessageSquareText,
   Building2,
+  Store,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/utils/cn";
-import { STORAGE_KEYS, APP_CONFIG } from "@/constants/app.constants";
+import { STORAGE_KEYS, APP_CONFIG, APP_EVENTS } from "@/constants/app.constants";
+import { territoryApi } from "@/features/territory/api/territory.api";
+import type { BranchResponse } from "@/types/territory.types";
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -50,6 +54,82 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
       localStorage.setItem(STORAGE_KEYS.SIDEBAR_COLLAPSED, String(nextState));
     }
   };
+
+  // Branch management states
+  const [branches, setBranches] = useState<BranchResponse[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return localStorage.getItem(STORAGE_KEYS.SELECTED_BRANCH_ID) || "";
+  });
+  const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(false);
+
+  // Fetch branches for sidebar selector
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingBranches(true);
+    territoryApi.branches
+      .getAll({ pageSize: 100 })
+      .then((res) => {
+        if (isMounted && res?.data) {
+          setBranches(res.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load branches in Sidebar", err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingBranches(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Listen for branch changes from other parts of the application
+  useEffect(() => {
+    const handleBranchChanged = (e: any) => {
+      const newBranchId =
+        e?.detail?.branchId !== undefined
+          ? e.detail.branchId
+          : localStorage.getItem(STORAGE_KEYS.SELECTED_BRANCH_ID) || "";
+      setSelectedBranchId(newBranchId);
+    };
+
+    window.addEventListener(APP_EVENTS.BRANCH_CHANGED, handleBranchChanged);
+    window.addEventListener("storage", handleBranchChanged);
+
+    return () => {
+      window.removeEventListener(APP_EVENTS.BRANCH_CHANGED, handleBranchChanged);
+      window.removeEventListener("storage", handleBranchChanged);
+    };
+  }, []);
+
+  const handleBranchSelect = (newBranchId: string) => {
+    setSelectedBranchId(newBranchId);
+    let branchCode = "";
+    if (typeof window !== "undefined") {
+      if (newBranchId) {
+        localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_ID, newBranchId);
+        const matched = branches.find((b) => b.id === newBranchId);
+        if (matched) {
+          branchCode = matched.branchCode;
+          localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_CODE, matched.branchCode);
+        }
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCH_ID);
+        localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCH_CODE);
+      }
+
+      window.dispatchEvent(
+        new CustomEvent(APP_EVENTS.BRANCH_CHANGED, {
+          detail: { branchId: newBranchId, branchCode },
+        })
+      );
+    }
+  };
+
+  const activeBranch = branches.find((b) => b.id === selectedBranchId);
 
   const handleLogout = async () => {
     await logout();
@@ -221,6 +301,111 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
             )}
           </button>
         </div>
+
+        {/* ============================================================== */}
+        {/* Branch Selector Widget */}
+        {/* ============================================================== */}
+        {!isCollapsed ? (
+          <div className="border-b border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+            <div className="mb-1.5 flex items-center justify-between px-0.5">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <Store className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                Chi nhánh làm việc
+              </span>
+              {activeBranch && (
+                <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/70 dark:text-emerald-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {activeBranch.branchCode}
+                </span>
+              )}
+            </div>
+
+            <div className="relative">
+              <select
+                value={selectedBranchId}
+                onChange={(e) => handleBranchSelect(e.target.value)}
+                disabled={isLoadingBranches}
+                className="w-full appearance-none rounded-lg border border-slate-300 bg-white py-2 pl-8 pr-7 text-xs font-semibold text-slate-800 shadow-2xs transition-colors hover:border-slate-400 focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-600 cursor-pointer"
+              >
+                <option value="">-- Toàn hệ thống (Tất cả) --</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    [{b.branchCode}] {b.address ? `${b.address} (${b.city})` : b.city}
+                  </option>
+                ))}
+              </select>
+              <Building2 className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            </div>
+
+            {activeBranch ? (
+              <p
+                className="mt-1.5 truncate px-0.5 text-[11px] text-slate-500 dark:text-slate-400"
+                title={
+                  activeBranch.address
+                    ? `${activeBranch.address}, ${activeBranch.city}`
+                    : activeBranch.city
+                }
+              >
+                {activeBranch.address
+                  ? `${activeBranch.address}, ${activeBranch.city}`
+                  : activeBranch.city}
+              </p>
+            ) : (
+              <p className="mt-1.5 px-0.5 text-[11px] text-slate-400 italic">
+                Đang xem dữ liệu toàn chuỗi
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="border-b border-slate-200 p-2 text-center dark:border-slate-800">
+            <div
+              className={cn(
+                "group relative mx-auto flex h-10 w-10 items-center justify-center rounded-xl transition-all shadow-2xs",
+                activeBranch
+                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200/70 dark:bg-slate-900 dark:text-slate-400 border border-slate-200 dark:border-slate-800"
+              )}
+              title={
+                activeBranch
+                  ? `Chi nhánh đang chọn: [${activeBranch.branchCode}] ${activeBranch.address || activeBranch.city} (Bấm để đổi)`
+                  : "Chọn chi nhánh làm việc (Toàn hệ thống)"
+              }
+            >
+              <Store className="h-5 w-5" />
+              {activeBranch && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-950" />
+                </span>
+              )}
+              <select
+                value={selectedBranchId}
+                onChange={(e) => handleBranchSelect(e.target.value)}
+                disabled={isLoadingBranches}
+                title="Chọn chi nhánh làm việc"
+                aria-label="Chọn chi nhánh làm việc"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              >
+                <option value="">-- Toàn hệ thống (Tất cả) --</option>
+                {branches.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    [{b.branchCode}] {b.address ? `${b.address} (${b.city})` : b.city}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {activeBranch ? (
+              <span className="mt-1 block truncate text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                {activeBranch.branchCode}
+              </span>
+            ) : (
+              <span className="mt-1 block text-[10px] font-medium text-slate-400">
+                Toàn HT
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Navigation list */}
         <div className="flex-1 overflow-y-auto px-3 py-4 scrollbar-thin">

@@ -13,3 +13,7 @@ export const APP_CONFIG = {
   VERSION: "1.0.0",
   DESCRIPTION: "Hệ thống quản lý chuỗi nhà hàng toàn diện & chuyên nghiệp",
 } as const;
+
+export const APP_EVENTS = {
+  BRANCH_CHANGED: "mp_branch_changed",
+} as const;

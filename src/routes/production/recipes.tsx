@@ -14,7 +14,7 @@ import { RecipeFormModal } from "@/features/production/components/RecipeFormModa
 import { RecipeDetailModal } from "@/features/production/components/RecipeDetailModal";
 import { DeleteConfirmModal } from "@/features/catalog/components/DeleteConfirmModal";
 import { CatalogAlert, type AlertState } from "@/features/catalog/components/CatalogAlert";
-import { STORAGE_KEYS } from "@/constants/app.constants";
+import { STORAGE_KEYS, APP_EVENTS } from "@/constants/app.constants";
 import type {
   RecipeResponse,
   RecipeDetailResponse,
@@ -140,6 +140,25 @@ export default function RecipesPage() {
       setIsFormOpen(true);
     }
   }, [productIdParam, recipeIdParam, createParam, branchIdParam]);
+
+  // Listen for branch changes from Sidebar or other components
+  useEffect(() => {
+    const handleBranchChanged = (e: any) => {
+      const newBranchId =
+        e?.detail?.branchId !== undefined
+          ? e.detail.branchId
+          : localStorage.getItem(STORAGE_KEYS.SELECTED_BRANCH_ID) || "";
+      setSelectedBranchId(newBranchId);
+    };
+
+    window.addEventListener(APP_EVENTS.BRANCH_CHANGED, handleBranchChanged);
+    window.addEventListener("storage", handleBranchChanged);
+
+    return () => {
+      window.removeEventListener(APP_EVENTS.BRANCH_CHANGED, handleBranchChanged);
+      window.removeEventListener("storage", handleBranchChanged);
+    };
+  }, []);
 
   // Fetch recipes
   const fetchRecipes = useCallback(async () => {
@@ -475,12 +494,25 @@ export default function RecipesPage() {
                   onChange={(e) => {
                     const bId = e.target.value;
                     setSelectedBranchId(bId);
-                    if (bId && typeof window !== "undefined") {
-                      localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_ID, bId);
-                      const matched = branches.find((b) => b.id === bId);
-                      if (matched) {
-                        localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_CODE, matched.branchCode);
+                    let branchCode = "";
+                    if (typeof window !== "undefined") {
+                      if (bId) {
+                        localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_ID, bId);
+                        const matched = branches.find((b) => b.id === bId);
+                        if (matched) {
+                          branchCode = matched.branchCode;
+                          localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_CODE, matched.branchCode);
+                        }
+                      } else {
+                        localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCH_ID);
+                        localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCH_CODE);
                       }
+
+                      window.dispatchEvent(
+                        new CustomEvent(APP_EVENTS.BRANCH_CHANGED, {
+                          detail: { branchId: bId, branchCode },
+                        })
+                      );
                     }
                   }}
                   className="w-full rounded-lg border border-indigo-200 bg-indigo-50/40 px-3 py-2 text-xs font-medium text-slate-800 shadow-xs focus:border-indigo-500 focus:outline-hidden dark:border-indigo-900/50 dark:bg-slate-800 dark:text-slate-200"

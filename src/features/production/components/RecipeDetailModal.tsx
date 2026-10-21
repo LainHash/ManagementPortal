@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { StockStatusBadge } from "@/features/catalog/components/Badges";
 import { recipeApi } from "@/features/production/api/recipe.api";
 import { territoryApi } from "@/features/territory/api/territory.api";
-import { STORAGE_KEYS } from "@/constants/app.constants";
+import { STORAGE_KEYS, APP_EVENTS } from "@/constants/app.constants";
 import type { RecipeDetailResponse } from "@/types/production.types";
 import type { BranchResponse } from "@/types/territory.types";
 import {
@@ -117,12 +117,25 @@ export function RecipeDetailModal({
 
   const handleBranchChange = (newBranchId: string) => {
     setSelectedBranchId(newBranchId);
-    if (newBranchId && typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_ID, newBranchId);
-      const matched = branchesList.find((b) => b.id === newBranchId);
-      if (matched) {
-        localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_CODE, matched.branchCode);
+    let branchCode = "";
+    if (typeof window !== "undefined") {
+      if (newBranchId) {
+        localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_ID, newBranchId);
+        const matched = branchesList.find((b) => b.id === newBranchId);
+        if (matched) {
+          branchCode = matched.branchCode;
+          localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_CODE, matched.branchCode);
+        }
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCH_ID);
+        localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCH_CODE);
       }
+
+      window.dispatchEvent(
+        new CustomEvent(APP_EVENTS.BRANCH_CHANGED, {
+          detail: { branchId: newBranchId, branchCode },
+        })
+      );
     }
   };
 

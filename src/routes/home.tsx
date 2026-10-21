@@ -28,7 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { homeApi, type HomeOverviewData } from "@/features/home/api/home.api";
 import { AdminLayout } from "@/layouts/AdminLayout";
-import { APP_CONFIG, STORAGE_KEYS } from "@/constants/app.constants";
+import { APP_CONFIG, STORAGE_KEYS, APP_EVENTS } from "@/constants/app.constants";
 import type { BranchResponse } from "@/types/territory.types";
 
 export function meta() {
@@ -73,6 +73,25 @@ export default function HomePage() {
     }
   }, []);
 
+  // Listen for branch changes from Sidebar or other components
+  useEffect(() => {
+    const handleBranchChanged = (e: any) => {
+      const newBranchId =
+        e?.detail?.branchId !== undefined
+          ? e.detail.branchId
+          : localStorage.getItem(STORAGE_KEYS.SELECTED_BRANCH_ID) || "";
+      setSelectedBranchId(newBranchId);
+    };
+
+    window.addEventListener(APP_EVENTS.BRANCH_CHANGED, handleBranchChanged);
+    window.addEventListener("storage", handleBranchChanged);
+
+    return () => {
+      window.removeEventListener(APP_EVENTS.BRANCH_CHANGED, handleBranchChanged);
+      window.removeEventListener("storage", handleBranchChanged);
+    };
+  }, []);
+
   useEffect(() => {
     loadData(selectedBranchId);
   }, [loadData, selectedBranchId]);
@@ -80,16 +99,24 @@ export default function HomePage() {
   // Handle branch change in dropdown
   const handleBranchChange = (newBranchId: string) => {
     setSelectedBranchId(newBranchId);
+    let branchCode = "";
     if (newBranchId) {
       localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_ID, newBranchId);
       const chosen = data?.branches?.find((b) => b.id === newBranchId);
       if (chosen) {
+        branchCode = chosen.branchCode;
         localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_CODE, chosen.branchCode);
       }
     } else {
       localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCH_ID);
       localStorage.removeItem(STORAGE_KEYS.SELECTED_BRANCH_CODE);
     }
+
+    window.dispatchEvent(
+      new CustomEvent(APP_EVENTS.BRANCH_CHANGED, {
+        detail: { branchId: newBranchId, branchCode },
+      })
+    );
   };
 
   const handleClearBranch = () => {
