@@ -3,13 +3,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StockStatusBadge, InventoryTypeBadge } from "./Badges";
 import type { ProductResponse } from "@/types/catalog.types";
-import { UtensilsCrossed, Eye, Edit, Trash2, Tags, Layers } from "lucide-react";
+import { UtensilsCrossed, Eye, Edit, Trash2, Tags, Layers, DollarSign, Boxes } from "lucide-react";
 
 interface ProductCardProps {
   product: ProductResponse;
   onViewDetail: (product: ProductResponse) => void;
   onEdit: (product: ProductResponse) => void;
   onDelete: (product: ProductResponse) => void;
+  onUpdatePrice?: (product: ProductResponse) => void;
+  onUpdateStock?: (product: ProductResponse) => void;
 }
 
 export function ProductCard({
@@ -17,6 +19,8 @@ export function ProductCard({
   onViewDetail,
   onEdit,
   onDelete,
+  onUpdatePrice,
+  onUpdateStock,
 }: ProductCardProps) {
   const imageUrl = product.primaryImage?.image?.url;
   const formatPrice = (price?: number | null, currency?: string | null) => {
@@ -112,6 +116,30 @@ export function ProductCard({
             <Eye className="h-3.5 w-3.5 mr-1" />
             Chi tiết
           </Button>
+          {onUpdatePrice && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onUpdatePrice(product)}
+              className="h-8 px-2 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
+              title="Cập nhật giá theo chi nhánh"
+            >
+              <DollarSign className="h-3.5 w-3.5 mr-1" />
+              Giá
+            </Button>
+          )}
+          {onUpdateStock && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onUpdateStock(product)}
+              className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30"
+              title="Cập nhật tồn kho theo chi nhánh"
+            >
+              <Boxes className="h-3.5 w-3.5 mr-1" />
+              Kho
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"

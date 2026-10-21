@@ -8,6 +8,8 @@ import { CatalogNav } from "@/features/catalog/components/CatalogNav";
 import { ProductCard } from "@/features/catalog/components/ProductCard";
 import { ProductFormModal } from "@/features/catalog/components/ProductFormModal";
 import { ProductDetailModal } from "@/features/catalog/components/ProductDetailModal";
+import { ProductBranchPriceModal } from "@/features/catalog/components/ProductBranchPriceModal";
+import { ProductBranchStockModal } from "@/features/catalog/components/ProductBranchStockModal";
 import { DeleteConfirmModal } from "@/features/catalog/components/DeleteConfirmModal";
 import { CatalogAlert, type AlertState } from "@/features/catalog/components/CatalogAlert";
 import { StockStatusBadge, InventoryTypeBadge } from "@/features/catalog/components/Badges";
@@ -32,6 +34,8 @@ import {
   ChevronLeft,
   ChevronRight,
   AlertTriangle,
+  DollarSign,
+  Boxes,
 } from "lucide-react";
 
 export function meta() {
@@ -80,6 +84,12 @@ export default function ProductsPage() {
 
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
   const [deletingProduct, setDeletingProduct] = useState<ProductResponse | null>(null);
+
+  const [isPriceModalOpen, setIsPriceModalOpen] = useState<boolean>(false);
+  const [priceModalProduct, setPriceModalProduct] = useState<ProductResponse | null>(null);
+
+  const [isStockModalOpen, setIsStockModalOpen] = useState<boolean>(false);
+  const [stockModalProduct, setStockModalProduct] = useState<ProductResponse | null>(null);
 
   // Fetch products
   const fetchProducts = useCallback(async () => {
@@ -209,6 +219,26 @@ export default function ProductsPage() {
   const handleOpenDelete = (prod: ProductResponse) => {
     setDeletingProduct(prod);
     setIsDeleteOpen(true);
+  };
+
+  const handleOpenUpdatePrice = (prod: ProductResponse) => {
+    setPriceModalProduct(prod);
+    setIsPriceModalOpen(true);
+  };
+
+  const handleOpenUpdateStock = (prod: ProductResponse) => {
+    setStockModalProduct(prod);
+    setIsStockModalOpen(true);
+  };
+
+  const handlePriceSuccess = (msg: string) => {
+    setAlert({ type: "success", message: msg });
+    fetchProducts();
+  };
+
+  const handleStockSuccess = (msg: string) => {
+    setAlert({ type: "success", message: msg });
+    fetchProducts();
   };
 
   const formatPrice = (price?: number | null, currency?: string | null) => {
@@ -446,6 +476,8 @@ export default function ProductsPage() {
                 onViewDetail={handleOpenDetail}
                 onEdit={handleOpenEdit}
                 onDelete={handleOpenDelete}
+                onUpdatePrice={handleOpenUpdatePrice}
+                onUpdateStock={handleOpenUpdateStock}
               />
             ))}
           </div>
@@ -530,6 +562,24 @@ export default function ProductsPage() {
                             title="Xem chi tiết"
                           >
                             <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenUpdatePrice(prod)}
+                            className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                            title="Cập nhật giá theo chi nhánh"
+                          >
+                            <DollarSign className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenUpdateStock(prod)}
+                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/40"
+                            title="Cập nhật tồn kho theo chi nhánh"
+                          >
+                            <Boxes className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -630,6 +680,32 @@ export default function ProductsPage() {
           product={viewingProduct}
           branchId={selectedBranch || undefined}
           onEdit={handleOpenEdit}
+          onUpdatePrice={handleOpenUpdatePrice}
+          onUpdateStock={handleOpenUpdateStock}
+        />
+
+        <ProductBranchPriceModal
+          isOpen={isPriceModalOpen}
+          onClose={() => {
+            setIsPriceModalOpen(false);
+            setPriceModalProduct(null);
+          }}
+          product={priceModalProduct}
+          branches={branches}
+          initialBranchId={selectedBranch}
+          onSuccess={handlePriceSuccess}
+        />
+
+        <ProductBranchStockModal
+          isOpen={isStockModalOpen}
+          onClose={() => {
+            setIsStockModalOpen(false);
+            setStockModalProduct(null);
+          }}
+          product={stockModalProduct}
+          branches={branches}
+          initialBranchId={selectedBranch}
+          onSuccess={handleStockSuccess}
         />
 
         <DeleteConfirmModal

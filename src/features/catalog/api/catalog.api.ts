@@ -8,6 +8,8 @@ import type {
   CreateProductCategoryRequest,
   CreateProductRequest,
   CreateUnitRequest,
+  ProductBranchPriceResponse,
+  ProductBranchStockResponse,
   ProductCategoryDetailResponse,
   ProductCategoryResponse,
   ProductDetailResponse,
@@ -15,6 +17,8 @@ import type {
   UnitDetailResponse,
   UnitResponse,
   UpdateBrandRequest,
+  UpdateProductBranchPriceRequest,
+  UpdateProductBranchStockRequest,
   UpdateProductCategoryRequest,
   UpdateProductRequest,
   UpdateUnitRequest,
@@ -50,6 +54,20 @@ export const catalogApi = {
     },
     restore: async (id: string): Promise<Result<void>> => {
       return axiosClient.patch(API_ENDPOINTS.CATALOG.PRODUCT_RESTORE(id));
+    },
+    updateBranchPrice: async (
+      productId: string,
+      branchId: string,
+      body: UpdateProductBranchPriceRequest
+    ): Promise<Result<ProductBranchPriceResponse>> => {
+      return axiosClient.put(API_ENDPOINTS.CATALOG.PRODUCT_BRANCH_PRICE(productId, branchId), body);
+    },
+    updateBranchStock: async (
+      productId: string,
+      branchId: string,
+      body: UpdateProductBranchStockRequest
+    ): Promise<Result<ProductBranchStockResponse>> => {
+      return axiosClient.put(API_ENDPOINTS.CATALOG.PRODUCT_BRANCH_STOCK(productId, branchId), body);
     },
   },
 

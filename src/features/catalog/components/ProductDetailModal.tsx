@@ -16,6 +16,7 @@ import {
   Edit,
   Loader2,
   Calendar,
+  Boxes,
 } from "lucide-react";
 
 interface ProductDetailModalProps {
@@ -24,6 +25,8 @@ interface ProductDetailModalProps {
   product: ProductResponse | null;
   branchId?: string;
   onEdit?: (product: ProductResponse) => void;
+  onUpdatePrice?: (product: ProductResponse) => void;
+  onUpdateStock?: (product: ProductResponse) => void;
 }
 
 export function ProductDetailModal({
@@ -32,6 +35,8 @@ export function ProductDetailModal({
   product,
   branchId,
   onEdit,
+  onUpdatePrice,
+  onUpdateStock,
 }: ProductDetailModalProps) {
   const [detail, setDetail] = useState<ProductDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -233,21 +238,53 @@ export function ProductDetailModal({
         )}
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <Button variant="outline" onClick={onClose}>
-            Đóng
-          </Button>
-          {onEdit && (
-            <Button
-              onClick={() => {
-                onClose();
-                onEdit(product);
-              }}
-            >
-              <Edit className="mr-1.5 h-4 w-4" />
-              Chỉnh sửa món này
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2">
+            {onUpdatePrice && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onClose();
+                  onUpdatePrice(product);
+                }}
+                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400"
+              >
+                <DollarSign className="mr-1.5 h-4 w-4" />
+                Chỉnh giá chi nhánh
+              </Button>
+            )}
+            {onUpdateStock && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onClose();
+                  onUpdateStock(product);
+                }}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400"
+              >
+                <Boxes className="mr-1.5 h-4 w-4" />
+                Chỉnh tồn kho
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Đóng
             </Button>
-          )}
+            {onEdit && (
+              <Button
+                onClick={() => {
+                  onClose();
+                  onEdit(product);
+                }}
+              >
+                <Edit className="mr-1.5 h-4 w-4" />
+                Chỉnh sửa món này
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </Modal>

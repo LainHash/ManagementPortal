@@ -3,7 +3,7 @@
 // Đối chiếu: API.Contract.DTOs.Catalog
 // ============================================================================
 
-import type { InventoryType, StockStatus, UnitType } from "./enums";
+import type { Currency, InventoryType, StockStatus, UnitType } from "./enums";
 import type { RecipeResponse } from "./production.types";
 import type { BrandImageResponse, ProductImageResponse } from "./storage.types";
 
@@ -114,6 +114,45 @@ export interface UpdateProductRequest {
   brandPublicId?: string | null;
   categoryPublicId: string;
   unitPublicId: string;
+}
+
+// Đối chiếu: API.Contract.DTOs.Catalog.Products.UpdateProductBranchPriceRequest
+export interface UpdateProductBranchPriceRequest {
+  unitPrice: number;
+  currency?: Currency;
+}
+
+// Đối chiếu: API.Contract.DTOs.Catalog.Products.ProductBranchPriceResponse
+export interface ProductBranchPriceResponse {
+  productPublicId: string;
+  productName: string;
+  branchPublicId: string;
+  branchCode: string;
+  branchAddress: string;
+  unitPrice: number;
+  currency: string;
+  updatedAt: string;
+}
+
+// Đối chiếu: API.Contract.DTOs.Catalog.Products.UpdateProductBranchStockRequest
+export interface UpdateProductBranchStockRequest {
+  quantityOnHand: number;
+  reorderLevel?: number | null;
+}
+
+// Đối chiếu: API.Contract.DTOs.Catalog.Products.ProductBranchStockResponse
+export interface ProductBranchStockResponse {
+  productPublicId: string;
+  productName: string;
+  branchPublicId: string;
+  branchCode: string;
+  branchAddress: string;
+  quantityOnHand: number;
+  quantityReserved: number;
+  availableQuantity: number;
+  reorderLevel: number;
+  stockStatus: StockStatus;
+  updatedAt: string;
 }
 
 // ----------------------------------------------------------------------------

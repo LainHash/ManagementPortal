@@ -23,6 +23,8 @@ export const API_ENDPOINTS = {
     PRODUCTS: "/catalog/products",
     PRODUCT_DETAIL: (id: string) => `/catalog/products/${id}`,
     PRODUCT_RESTORE: (id: string) => `/catalog/products/${id}/restore`,
+    PRODUCT_BRANCH_PRICE: (productId: string, branchId: string) => `/catalog/products/${productId}/branches/${branchId}/price`,
+    PRODUCT_BRANCH_STOCK: (productId: string, branchId: string) => `/catalog/products/${productId}/branches/${branchId}/stock`,
 
     CATEGORIES: "/catalog/categories",
     CATEGORY_DETAIL: (id: string) => `/catalog/categories/${id}`,
