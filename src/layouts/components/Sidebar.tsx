@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Sparkles,
   ChefHat,
+  Scale,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar } from "@/components/ui/avatar";
@@ -81,6 +82,11 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           label: "Thương hiệu",
           href: "/brands",
           icon: Layers,
+        },
+        {
+          label: "Đơn vị tính",
+          href: "/units",
+          icon: Scale,
         },
       ],
     },

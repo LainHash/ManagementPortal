@@ -3,6 +3,7 @@ export const API_ENDPOINTS = {
     ROOT: "",
     HOME: "/home",
     BOOTSTRAP_SEED: "/bootstrap/seed",
+    IMPORT: "/import",
   },
   AUTH: {
     LOGIN: "/Authentication/login",
@@ -19,14 +20,26 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `/Users/${id}`,
   },
   CATALOG: {
-    PRODUCTS: "/Products",
-    CATEGORIES: "/ProductCategories",
-    BRANDS: "/Brands",
-    UNITS: "/Units",
+    PRODUCTS: "/catalog/products",
+    PRODUCT_DETAIL: (id: string) => `/catalog/products/${id}`,
+    PRODUCT_RESTORE: (id: string) => `/catalog/products/${id}/restore`,
+
+    CATEGORIES: "/catalog/categories",
+    CATEGORY_DETAIL: (id: string) => `/catalog/categories/${id}`,
+    CATEGORY_RESTORE: (id: string) => `/catalog/categories/${id}/restore`,
+
+    BRANDS: "/catalog/brands",
+    BRAND_DETAIL: (id: string) => `/catalog/brands/${id}`,
+    BRAND_RESTORE: (id: string) => `/catalog/brands/${id}/restore`,
+
+    UNITS: "/catalog/units",
+    UNIT_DETAIL: (id: string) => `/catalog/units/${id}`,
+    UNIT_RESTORE: (id: string) => `/catalog/units/${id}/restore`,
   },
   TERRITORY: {
-    BRANCHES: "/Branches",
-    AREAS: "/Areas",
-    TABLES: "/RestaurantTables",
+    BRANCHES: "/territory/Branches",
+    BRANCH_DETAIL: (id: string) => `/territory/Branches/${id}`,
+    AREAS: "/territory/Areas",
+    TABLES: "/territory/RestaurantTables",
   },
 } as const;
