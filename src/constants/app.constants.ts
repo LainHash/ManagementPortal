@@ -3,6 +3,8 @@ export const STORAGE_KEYS = {
   REFRESH_TOKEN: "mp_refresh_token",
   USER_DATA: "mp_user_data",
   SIDEBAR_COLLAPSED: "mp_sidebar_collapsed",
+  SELECTED_BRANCH_ID: "mp_selected_branch_id",
+  SELECTED_BRANCH_CODE: "mp_selected_branch_code",
 } as const;
 
 export const APP_CONFIG = {

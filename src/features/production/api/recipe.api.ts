@@ -17,8 +17,10 @@ export const recipeApi = {
     getAll: async (params?: GetAllRecipesParams): Promise<PaginationResult<RecipeResponse>> => {
       return axiosClient.get(API_ENDPOINTS.PRODUCTION.RECIPES, { params });
     },
-    getById: async (id: string): Promise<Result<RecipeDetailResponse>> => {
-      return axiosClient.get(API_ENDPOINTS.PRODUCTION.RECIPE_DETAIL(id));
+    getById: async (id: string, branchId?: string): Promise<Result<RecipeDetailResponse>> => {
+      return axiosClient.get(API_ENDPOINTS.PRODUCTION.RECIPE_DETAIL(id), {
+        params: branchId ? { branchId } : undefined,
+      });
     },
     create: async (body: CreateRecipeRequest): Promise<Result<RecipeDetailResponse>> => {
       return axiosClient.post(API_ENDPOINTS.PRODUCTION.RECIPES, body);

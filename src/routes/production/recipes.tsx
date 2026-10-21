@@ -7,12 +7,14 @@ import { Card } from "@/components/ui/card";
 import { recipeApi } from "@/features/production/api/recipe.api";
 import { catalogApi } from "@/features/catalog/api/catalog.api";
 import { inventoryApi } from "@/features/inventory/api/inventory.api";
+import { territoryApi } from "@/features/territory/api/territory.api";
 import { CatalogNav } from "@/features/catalog/components/CatalogNav";
 import { RecipeCard } from "@/features/production/components/RecipeCard";
 import { RecipeFormModal } from "@/features/production/components/RecipeFormModal";
 import { RecipeDetailModal } from "@/features/production/components/RecipeDetailModal";
 import { DeleteConfirmModal } from "@/features/catalog/components/DeleteConfirmModal";
 import { CatalogAlert, type AlertState } from "@/features/catalog/components/CatalogAlert";
+import { STORAGE_KEYS } from "@/constants/app.constants";
 import type {
   RecipeResponse,
   RecipeDetailResponse,
@@ -21,6 +23,7 @@ import type {
 } from "@/types/production.types";
 import type { ProductResponse } from "@/types/catalog.types";
 import type { IngredientResponse } from "@/types/inventory.types";
+import type { BranchResponse } from "@/types/territory.types";
 import {
   ChefHat,
   Plus,
@@ -60,6 +63,7 @@ export default function RecipesPage() {
   const productIdParam = searchParams.get("productId");
   const recipeIdParam = searchParams.get("recipeId");
   const createParam = searchParams.get("create");
+  const branchIdParam = searchParams.get("branchId");
 
   // View mode
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
@@ -79,6 +83,13 @@ export default function RecipesPage() {
   const [recipes, setRecipes] = useState<RecipeResponse[]>([]);
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [ingredients, setIngredients] = useState<IngredientResponse[]>([]);
+  const [branches, setBranches] = useState<BranchResponse[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(STORAGE_KEYS.SELECTED_BRANCH_ID) || "";
+    }
+    return "";
+  });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [alert, setAlert] = useState<AlertState | null>(null);
@@ -93,18 +104,20 @@ export default function RecipesPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
   const [deletingRecipe, setDeletingRecipe] = useState<RecipeResponse | null>(null);
 
-  // Fetch products and ingredients for selection
+  // Fetch products, ingredients, and branches for selection
   useEffect(() => {
     const loadOptions = async () => {
       try {
-        const [prodRes, ingRes] = await Promise.all([
+        const [prodRes, ingRes, branchRes] = await Promise.all([
           catalogApi.products.getAll({ page: 1, pageSize: 200 }),
           inventoryApi.ingredients.getAll({ page: 1, pageSize: 200 }),
+          territoryApi.branches.getAll({ pageSize: 100 }),
         ]);
         if (prodRes?.data) setProducts(prodRes.data);
         if (ingRes?.data) setIngredients(ingRes.data);
+        if (branchRes?.data) setBranches(branchRes.data);
       } catch (err) {
-        console.error("Failed to load products/ingredients options", err);
+        console.error("Failed to load products/ingredients/branches options", err);
       }
     };
     loadOptions();
@@ -115,6 +128,9 @@ export default function RecipesPage() {
     if (productIdParam) {
       setSelectedProduct(productIdParam);
     }
+    if (branchIdParam) {
+      setSelectedBranchId(branchIdParam);
+    }
     if (recipeIdParam) {
       setViewingRecipeId(recipeIdParam);
       setIsDetailOpen(true);
@@ -123,7 +139,7 @@ export default function RecipesPage() {
       setEditingRecipe(null);
       setIsFormOpen(true);
     }
-  }, [productIdParam, recipeIdParam, createParam]);
+  }, [productIdParam, recipeIdParam, createParam, branchIdParam]);
 
   // Fetch recipes
   const fetchRecipes = useCallback(async () => {
@@ -452,6 +468,32 @@ export default function RecipesPage() {
                 </select>
               </div>
 
+              {/* Branch Selector for Inventory Context */}
+              <div className="min-w-[180px]">
+                <select
+                  value={selectedBranchId}
+                  onChange={(e) => {
+                    const bId = e.target.value;
+                    setSelectedBranchId(bId);
+                    if (bId && typeof window !== "undefined") {
+                      localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_ID, bId);
+                      const matched = branches.find((b) => b.id === bId);
+                      if (matched) {
+                        localStorage.setItem(STORAGE_KEYS.SELECTED_BRANCH_CODE, matched.branchCode);
+                      }
+                    }
+                  }}
+                  className="w-full rounded-lg border border-indigo-200 bg-indigo-50/40 px-3 py-2 text-xs font-medium text-slate-800 shadow-xs focus:border-indigo-500 focus:outline-hidden dark:border-indigo-900/50 dark:bg-slate-800 dark:text-slate-200"
+                >
+                  <option value="">Chi nhánh xem tồn: Mặc định</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      [{b.branchCode}] {b.address ? `${b.address} (${b.city})` : b.city}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Reset Filter Button */}
               {(keyword || selectedProduct || selectedPrimary !== "all") && (
                 <Button
@@ -730,6 +772,8 @@ export default function RecipesPage() {
             setViewingRecipeId(null);
           }}
           recipeId={viewingRecipeId}
+          branchId={selectedBranchId}
+          branches={branches}
           onEdit={(detail) => {
             setEditingRecipe(detail);
             setIsFormOpen(true);

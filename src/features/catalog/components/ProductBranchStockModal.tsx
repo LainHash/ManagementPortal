@@ -115,17 +115,19 @@ export function ProductBranchStockModal({
   const handleNavigateToRecipeDetail = (recipeId?: string) => {
     if (!activeProduct) return;
     onClose();
+    const branchQuery = selectedBranchId ? `&branchId=${selectedBranchId}` : "";
     if (recipeId) {
-      navigate(`/recipes?productId=${activeProduct.id}&recipeId=${recipeId}`);
+      navigate(`/recipes?productId=${activeProduct.id}&recipeId=${recipeId}${branchQuery}`);
     } else {
-      navigate(`/recipes?productId=${activeProduct.id}`);
+      navigate(`/recipes?productId=${activeProduct.id}${branchQuery}`);
     }
   };
 
   const handleCreateNewRecipe = () => {
     if (!activeProduct) return;
     onClose();
-    navigate(`/recipes?productId=${activeProduct.id}&create=true`);
+    const branchQuery = selectedBranchId ? `&branchId=${selectedBranchId}` : "";
+    navigate(`/recipes?productId=${activeProduct.id}&create=true${branchQuery}`);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
