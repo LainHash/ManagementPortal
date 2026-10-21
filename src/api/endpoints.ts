@@ -17,7 +17,15 @@ export const API_ENDPOINTS = {
   },
   USERS: {
     LIST: "/Users",
+    ROLES: "/Users/roles",
     DETAIL: (id: string) => `/Users/${id}`,
+    CREATE: "/Users",
+    UPDATE: (id: string) => `/Users/${id}`,
+    UPDATE_STATUS: (id: string) => `/Users/${id}/status`,
+    UPDATE_ROLE: (id: string) => `/Users/${id}/role`,
+    RESET_PASSWORD: (id: string) => `/Users/${id}/reset-password`,
+    DELETE: (id: string) => `/Users/${id}`,
+    RESTORE: (id: string) => `/Users/${id}/restore`,
   },
   CATALOG: {
     PRODUCTS: "/catalog/products",

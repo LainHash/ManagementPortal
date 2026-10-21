@@ -4,6 +4,7 @@
 // ============================================================================
 
 import type { OtpPurpose } from "./enums";
+import type { PaginationQuery } from "./common.types";
 
 // Đối chiếu: API.Contract.DTOs.Identity.OtpVerifications.ResendVerificationRequest
 export interface ResendVerificationRequest {
@@ -40,7 +41,7 @@ export interface PersonalProfileResponse {
   country: string;
   phone: string;
   citizenCardId: string;
-  avatarUrl?: string | null; // Thuộc tính mở rộng UI cho avatar hiển thị
+  avatarUrl?: string | null;
   bio?: string | null;
 }
 
@@ -84,12 +85,26 @@ export interface CompleteProfileRequest {
   citizenCardId: string;
 }
 
+// Đối chiếu: API.Contract.DTOs.Identity.Roles.RoleResponse
+export interface RoleResponse {
+  id: number;
+  publicId: string;
+  name: string;
+  description?: string | null;
+}
+
 // Đối chiếu: API.Contract.DTOs.Identity.Users.UserResponse
 export interface UserResponse {
   id: string;
   userName: string;
   email: string;
+  roleId: number;
   roleName: string;
+  isActive: boolean;
+  isDeleted: boolean;
+  fullName?: string | null;
+  phone?: string | null;
+  createdAt: string;
 }
 
 // Đối chiếu: API.Contract.DTOs.Identity.Users.UserDetailResponse
@@ -97,6 +112,68 @@ export interface UserDetailResponse {
   id: string;
   userName: string;
   email: string;
+  roleId?: number;
   roleName: string;
+  isActive?: boolean;
+  isDeleted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   personalProfile?: PersonalProfileResponse | null;
+}
+
+// Đối chiếu: API.Contract.DTOs.Identity.Users.CreateUserRequest
+export interface CreateUserRequest {
+  userName: string;
+  email: string;
+  password: string;
+  roleId: number;
+  isActive?: boolean;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  gender?: boolean;
+  phone?: string;
+  citizenCardId?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+}
+
+// Đối chiếu: API.Contract.DTOs.Identity.Users.UpdateUserRequest
+export interface UpdateUserRequest {
+  userName: string;
+  email: string;
+  roleId: number;
+  isActive: boolean;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  gender?: boolean;
+  phone?: string;
+  citizenCardId?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+}
+
+// Đối chiếu: API.Contract.DTOs.Identity.Users.UpdateUserStatusRequest
+export interface UpdateUserStatusRequest {
+  isActive: boolean;
+}
+
+// Đối chiếu: API.Contract.DTOs.Identity.Users.UpdateUserRoleRequest
+export interface UpdateUserRoleRequest {
+  roleId: number;
+}
+
+// Đối chiếu: API.Contract.DTOs.Identity.Users.AdminResetPasswordRequest
+export interface AdminResetPasswordRequest {
+  newPassword: string;
+}
+
+// Query parameters cho GetAll Users
+export interface UserQueryParams extends PaginationQuery {
+  roleId?: number;
+  isActive?: boolean;
+  isDeleted?: boolean;
 }
