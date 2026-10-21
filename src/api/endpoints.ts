@@ -109,6 +109,7 @@ export const API_ENDPOINTS = {
   SCHEDULE: {
     RESERVATIONS: "/schedule/reservations",
     RESERVATION_DETAIL: (id: string) => `/schedule/reservations/${id}`,
+    RESERVATION_UPDATE_STATUS: (id: string) => `/schedule/reservations/${id}/status`,
   },
   PRODUCTION: {
     RECIPES: "/production/recipes",

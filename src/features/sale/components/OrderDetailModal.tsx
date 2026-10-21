@@ -21,6 +21,9 @@ import {
   CheckCircle2,
   XCircle,
   Building2,
+  Sparkles,
+  CheckCheck,
+  Check,
 } from "lucide-react";
 
 interface OrderDetailModalProps {
@@ -96,32 +99,39 @@ export function OrderDetailModal({
     }
   };
 
-  // Next status action title
-  const getNextStatusLabel = (status: OrderStatus) => {
-    switch (status) {
-      case OrderStatus.Pending:
-        return "Xác nhận đơn";
-      case OrderStatus.Confirmed:
-        return "Chuyển chế biến (Bếp)";
-      case OrderStatus.Preparing:
-        return "Món sẵn sàng";
-      case OrderStatus.Ready:
-        return currentData.type === OrderType.Delivery ? "Bắt đầu giao hàng" : "Phục vụ tại bàn";
-      case OrderStatus.Delivering:
-      case OrderStatus.Served:
-        return "Hoàn tất đơn hàng";
-      default:
-        return "Chuyển tiếp";
+  // Define consecutive lifecycle steps for the order
+  const getLifecycleSteps = () => {
+    if (currentData.type === OrderType.Delivery) {
+      return [
+        { status: OrderStatus.Pending, label: "Chờ xác nhận", shortLabel: "Chờ duyệt", icon: Clock },
+        { status: OrderStatus.Confirmed, label: "Xác nhận đơn", shortLabel: "Xác nhận", icon: CheckCircle2 },
+        { status: OrderStatus.Preparing, label: "Chế biến", shortLabel: "Chế biến", icon: ChefHat },
+        { status: OrderStatus.Ready, label: "Món sẵn sàng", shortLabel: "Sẵn sàng", icon: Sparkles },
+        { status: OrderStatus.Delivering, label: "Đang giao hàng", shortLabel: "Giao hàng", icon: Truck },
+        { status: OrderStatus.Completed, label: "Hoàn tất đơn", shortLabel: "Hoàn tất", icon: CheckCheck },
+      ];
+    } else {
+      return [
+        { status: OrderStatus.Pending, label: "Chờ xác nhận", shortLabel: "Chờ duyệt", icon: Clock },
+        { status: OrderStatus.Confirmed, label: "Xác nhận đơn", shortLabel: "Xác nhận", icon: CheckCircle2 },
+        { status: OrderStatus.Preparing, label: "Chế biến", shortLabel: "Chế biến", icon: ChefHat },
+        { status: OrderStatus.Ready, label: "Món sẵn sàng", shortLabel: "Sẵn sàng", icon: Sparkles },
+        { status: OrderStatus.Served, label: "Phục vụ tại bàn", shortLabel: "Đã phục vụ", icon: UtensilsCrossed },
+        { status: OrderStatus.Completed, label: "Hoàn tất đơn", shortLabel: "Hoàn tất", icon: CheckCheck },
+      ];
     }
   };
 
-  // Handle Advance Status
-  const handleAdvanceStatus = async () => {
+  const steps = getLifecycleSteps();
+  const currentStepIdx = steps.findIndex((s) => s.status === currentData.status);
+
+  // Handle direct transition to target status
+  const handleUpdateStatus = async (targetStatus: OrderStatus, label: string) => {
     setIsActionLoading(true);
     setError(null);
     try {
-      await saleApi.orders.advanceStatus(currentData.id);
-      onStatusChanged?.(`Đã chuyển trạng thái đơn hàng #${currentData.orderCode} thành công!`);
+      await saleApi.orders.updateStatus(currentData.id, { status: targetStatus });
+      onStatusChanged?.(`Đã chuyển trạng thái đơn hàng #${currentData.orderCode} sang "${label}" thành công!`);
       fetchDetail();
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Không thể chuyển trạng thái đơn hàng.");
@@ -196,6 +206,86 @@ export function OrderDetailModal({
             <span>{error}</span>
           </div>
         )}
+
+        {/* Order Lifecycle Pipeline: Consecutive Individual Status Buttons */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <span>Vòng đời đơn hàng</span>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
+              <span className="font-normal lowercase text-slate-400">
+                {currentData.type === OrderType.Delivery ? "Giao hàng tận nơi" : "Tại chỗ / Mang về"}
+              </span>
+            </span>
+            {currentData.status === OrderStatus.Cancelled && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-bold text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                <XCircle className="h-3 w-3" />
+                Đã hủy đơn
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-thin">
+            {steps.map((step, idx) => {
+              const Icon = step.icon;
+              const isCurrent = step.status === currentData.status;
+              const isPast = currentStepIdx !== -1 && idx < currentStepIdx;
+              const isNext = currentStepIdx !== -1 && idx === currentStepIdx + 1;
+              const isFuture = currentStepIdx !== -1 && idx > currentStepIdx;
+              const canClick = isFuture && !isTerminalStatus && !isActionLoading;
+
+              return (
+                <React.Fragment key={step.status}>
+                  {idx > 0 && (
+                    <ChevronRight
+                      className={`h-3.5 w-3.5 shrink-0 ${
+                        isPast
+                          ? "text-emerald-500"
+                          : isCurrent
+                          ? "text-indigo-500"
+                          : "text-slate-300 dark:text-slate-700"
+                      }`}
+                    />
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={!canClick && !isCurrent}
+                    onClick={() => canClick && handleUpdateStatus(step.status, step.label)}
+                    title={
+                      isCurrent
+                        ? `Trạng thái hiện tại: ${step.label}`
+                        : canClick
+                        ? `Nhấp để chuyển sang: ${step.label}`
+                        : step.label
+                    }
+                    className={`relative flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all duration-200 ${
+                      isCurrent
+                        ? "bg-indigo-600 text-white shadow-md ring-2 ring-indigo-400 dark:bg-indigo-500"
+                        : isPast
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300"
+                        : isNext
+                        ? "bg-white text-indigo-700 border-2 border-indigo-500 shadow-xs hover:bg-indigo-50 hover:shadow-md cursor-pointer animate-pulse dark:bg-slate-800 dark:border-indigo-400 dark:text-indigo-300 dark:hover:bg-indigo-950/50"
+                        : canClick
+                        ? "bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:text-indigo-600 cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-750"
+                        : "bg-slate-100 text-slate-400 border border-slate-200/50 dark:bg-slate-800/40 dark:border-slate-800 dark:text-slate-600 cursor-not-allowed opacity-60"
+                    }`}
+                  >
+                    {isPast ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                    ) : (
+                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                    )}
+                    <span>{step.shortLabel}</span>
+                    {isCurrent && (
+                      <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
+                    )}
+                  </button>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
 
         {/* Customer & Location Summary Card */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5 text-xs dark:border-slate-800 dark:bg-slate-900/60">
@@ -365,34 +455,58 @@ export function OrderDetailModal({
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex flex-wrap gap-2">
-            {!isTerminalStatus && (
+        {/* Action Controls: Consecutive individual status buttons */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex flex-wrap items-center gap-2">
+            {!isTerminalStatus ? (
               <>
-                <Button
-                  onClick={handleAdvanceStatus}
-                  isLoading={isActionLoading}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5 text-xs"
-                >
-                  <CheckCircle2 className="h-4 w-4" />
-                  {getNextStatusLabel(currentData.status)}
-                </Button>
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1 hidden sm:inline">
+                  Chuyển trạng thái:
+                </span>
+                {steps
+                  .filter((_, idx) => currentStepIdx !== -1 && idx > currentStepIdx)
+                  .map((step, idx) => {
+                    const Icon = step.icon;
+                    const isNext = idx === 0;
+                    return (
+                      <Button
+                        key={step.status}
+                        onClick={() => handleUpdateStatus(step.status, step.label)}
+                        disabled={isActionLoading}
+                        size="sm"
+                        className={`text-xs gap-1.5 h-8.5 font-semibold transition-all ${
+                          isNext
+                            ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs font-bold"
+                            : "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-700"
+                        }`}
+                      >
+                        <Icon className="h-3.5 w-3.5" />
+                        <span>{step.label}</span>
+                      </Button>
+                    );
+                  })}
 
                 <Button
                   variant="outline"
+                  size="sm"
                   onClick={handleCancelOrder}
                   disabled={isActionLoading}
-                  className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs"
+                  className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs h-8.5"
                 >
-                  <XCircle className="h-4 w-4 mr-1" />
+                  <XCircle className="h-3.5 w-3.5 mr-1" />
                   Hủy đơn
                 </Button>
               </>
+            ) : (
+              <span className="text-xs italic text-slate-400">
+                {currentData.status === OrderStatus.Completed
+                  ? "Đơn hàng đã hoàn tất toàn bộ tiến trình."
+                  : "Đơn hàng đã được ghi nhận hủy."}
+              </span>
             )}
           </div>
 
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" size="sm" onClick={onClose} className="h-8.5 text-xs">
             Đóng
           </Button>
         </div>

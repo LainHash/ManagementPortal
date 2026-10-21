@@ -71,3 +71,9 @@ export interface CreateReservationRequest {
   specialRequests?: string | null;
   tableIds?: string[] | null;
 }
+
+// Đối chiếu: API.Contract.DTOs.Schedule.Reservations.UpdateReservationStatusRequest
+export interface UpdateReservationStatusRequest {
+  status: ReservationStatus;
+  reason?: string | null;
+}

@@ -12,6 +12,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface NavbarProps {
   onToggleMobileMenu: () => void;
@@ -73,6 +74,9 @@ export function Navbar({ onToggleMobileMenu }: NavbarProps) {
           <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>API Connected</span>
         </div>
+
+        {/* Theme Toggle Button (Sáng / Tối) */}
+        <ThemeToggle size="md" />
 
         {isAuthenticated && user ? (
           <div className="relative">

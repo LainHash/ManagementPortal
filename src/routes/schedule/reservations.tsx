@@ -158,6 +158,32 @@ export default function ReservationsPage() {
     setIsDetailOpen(true);
   };
 
+  // Quick update status
+  const handleQuickStatusChange = async (
+    reservation: ReservationResponse,
+    targetStatus: ReservationStatus,
+    label: string
+  ) => {
+    try {
+      await scheduleApi.reservations.updateStatus(reservation.id, {
+        status: targetStatus,
+      });
+      setAlert({
+        type: "success",
+        message: `Đã chuyển lịch #${reservation.reservationCode} sang "${label}" thành công!`,
+      });
+      fetchReservations();
+    } catch (err: any) {
+      setAlert({
+        type: "error",
+        message:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Không thể cập nhật trạng thái.",
+      });
+    }
+  };
+
   // Reset filters
   const handleResetFilters = () => {
     setKeyword("");
@@ -473,6 +499,7 @@ export default function ReservationsPage() {
                 key={item.id}
                 reservation={item}
                 onViewDetail={handleOpenDetail}
+                onQuickStatusChange={handleQuickStatusChange}
               />
             ))}
           </div>
@@ -597,11 +624,59 @@ export default function ReservationsPage() {
                         {/* Actions */}
                         <td className="px-4 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            {r.status === ReservationStatus.Pending && (
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  handleQuickStatusChange(
+                                    r,
+                                    ReservationStatus.Confirmed,
+                                    "Đã xác nhận"
+                                  )
+                                }
+                                className="h-7 px-2 text-[11px] bg-teal-600 hover:bg-teal-700 text-white font-bold"
+                              >
+                                Xác nhận
+                              </Button>
+                            )}
+
+                            {r.status === ReservationStatus.Confirmed && (
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  handleQuickStatusChange(
+                                    r,
+                                    ReservationStatus.Seated,
+                                    "Đã nhận bàn"
+                                  )
+                                }
+                                className="h-7 px-2 text-[11px] bg-teal-600 hover:bg-teal-700 text-white font-bold"
+                              >
+                                Nhận bàn
+                              </Button>
+                            )}
+
+                            {r.status === ReservationStatus.Seated && (
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  handleQuickStatusChange(
+                                    r,
+                                    ReservationStatus.Completed,
+                                    "Hoàn tất"
+                                  )
+                                }
+                                className="h-7 px-2 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                              >
+                                Trả bàn
+                              </Button>
+                            )}
+
                             {r.contactPhone && (
                               <a
                                 href={`tel:${r.contactPhone}`}
                                 title={`Gọi cho ${r.contactName}`}
-                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-emerald-400"
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-teal-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-teal-400"
                               >
                                 <Phone className="h-3.5 w-3.5" />
                               </a>
@@ -707,6 +782,10 @@ export default function ReservationsPage() {
             setViewingReservation(null);
           }}
           reservation={viewingReservation}
+          onStatusChanged={(msg) => {
+            setAlert({ type: "success", message: msg });
+            fetchReservations();
+          }}
         />
 
         {/* Toast Alert */}

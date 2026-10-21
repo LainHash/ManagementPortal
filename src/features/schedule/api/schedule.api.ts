@@ -5,6 +5,7 @@ import type {
   ReservationDetailResponse,
   ReservationResponse,
   CreateReservationRequest,
+  UpdateReservationStatusRequest,
 } from "@/types/schedule.types";
 import type { ReservationStatus } from "@/types/enums";
 
@@ -32,6 +33,12 @@ export const scheduleApi = {
       body: CreateReservationRequest
     ): Promise<Result<ReservationResponse>> => {
       return axiosClient.post(API_ENDPOINTS.SCHEDULE.RESERVATIONS, body);
+    },
+    updateStatus: async (
+      id: string,
+      body: UpdateReservationStatusRequest
+    ): Promise<Result<ReservationDetailResponse>> => {
+      return axiosClient.patch(API_ENDPOINTS.SCHEDULE.RESERVATION_UPDATE_STATUS(id), body);
     },
   },
 };

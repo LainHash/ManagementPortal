@@ -30,6 +30,7 @@ import { cn } from "@/utils/cn";
 import { STORAGE_KEYS, APP_CONFIG, APP_EVENTS } from "@/constants/app.constants";
 import { territoryApi } from "@/features/territory/api/territory.api";
 import type { BranchResponse } from "@/types/territory.types";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 interface SidebarProps {
   isMobileOpen?: boolean;
@@ -473,7 +474,20 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
         </div>
 
         {/* User Profile / Auth footer widget */}
-        <div className="border-t border-slate-200 p-3 dark:border-slate-800">
+        <div className="border-t border-slate-200 p-3 dark:border-slate-800 space-y-2">
+          {!isCollapsed ? (
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                Giao diện
+              </span>
+              <ThemeToggle size="sm" showLabel />
+            </div>
+          ) : (
+            <div className="flex justify-center pb-0.5">
+              <ThemeToggle size="sm" />
+            </div>
+          )}
+
           {isAuthenticated && user ? (
             <div
               className={cn(
