@@ -17,5 +17,14 @@ export default [
 
   // Communication Routes
   route("contact-messages", "routes/communication/contact-messages.tsx"),
+
+  // Operations & Sales Routes
+  route("orders", "routes/sale/orders.tsx"),
+  route("reservations", "routes/schedule/reservations.tsx"),
+
+  // Territory Routes
+  route("branches", "routes/territory/branches.tsx"),
+  route("areas", "routes/territory/areas.tsx"),
+  route("tables", "routes/territory/tables.tsx"),
 ] satisfies RouteConfig;
 

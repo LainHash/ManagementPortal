@@ -19,6 +19,7 @@ import {
   Scale,
   Wheat,
   MessageSquareText,
+  Building2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar } from "@/components/ui/avatar";
@@ -117,7 +118,18 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           icon: CalendarDays,
         },
         {
-          label: "Khu vực & Bàn",
+          label: "Chi nhánh",
+          href: "/branches",
+          icon: Building2,
+          badge: "Territory",
+        },
+        {
+          label: "Khu vực (Areas)",
+          href: "/areas",
+          icon: Layers,
+        },
+        {
+          label: "Bàn ăn (Tables)",
           href: "/tables",
           icon: MapPin,
         },
