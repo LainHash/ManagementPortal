@@ -17,6 +17,7 @@ import {
   Sparkles,
   ChefHat,
   Scale,
+  Wheat,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar } from "@/components/ui/avatar";
@@ -87,6 +88,17 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           label: "Đơn vị tính",
           href: "/units",
           icon: Scale,
+        },
+      ],
+    },
+    {
+      title: "Kho & Nguyên liệu",
+      items: [
+        {
+          label: "Kho nguyên liệu",
+          href: "/ingredients",
+          icon: Wheat,
+          badge: "Inventory",
         },
       ],
     },

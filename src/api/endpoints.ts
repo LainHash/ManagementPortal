@@ -38,6 +38,17 @@ export const API_ENDPOINTS = {
     UNIT_DETAIL: (id: string) => `/catalog/units/${id}`,
     UNIT_RESTORE: (id: string) => `/catalog/units/${id}/restore`,
   },
+  INVENTORY: {
+    INGREDIENTS: "/inventory/ingredients",
+    INGREDIENT_DETAIL: (id: string) => `/inventory/ingredients/${id}`,
+    INGREDIENT_RESTORE: (id: string) => `/inventory/ingredients/${id}/restore`,
+    INGREDIENT_BRANCH_PRICE: (ingredientId: string, branchId: string) => `/inventory/ingredients/${ingredientId}/branches/${branchId}/price`,
+    INGREDIENT_BRANCH_STOCK: (ingredientId: string, branchId: string) => `/inventory/ingredients/${ingredientId}/branches/${branchId}/stock`,
+
+    CATEGORIES: "/inventory/categories",
+    CATEGORY_DETAIL: (id: string) => `/inventory/categories/${id}`,
+    CATEGORY_RESTORE: (id: string) => `/inventory/categories/${id}/restore`,
+  },
   TERRITORY: {
     BRANCHES: "/territory/Branches",
     BRANCH_DETAIL: (id: string) => `/territory/Branches/${id}`,

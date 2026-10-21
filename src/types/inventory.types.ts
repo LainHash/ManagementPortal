@@ -3,6 +3,8 @@
 // Đối chiếu: API.Contract.DTOs.Inventory
 // ============================================================================
 
+import type { Currency, StockStatus } from "./enums";
+
 // Đối chiếu: API.Contract.DTOs.Inventory.IngredientCategories.IngredientCategoryResponse
 export interface IngredientCategoryResponse {
   id: string;
@@ -39,6 +41,10 @@ export interface IngredientResponse {
   unitSymbol: string;
   brandPublicId?: string | null;
   brandName?: string | null;
+  unitPrice?: number | null;
+  currency?: string | null;
+  availableQuantity?: number | null;
+  stockStatus?: StockStatus;
 }
 
 // Đối chiếu: API.Contract.DTOs.Inventory.Ingredients.IngredientMinimalResponse
@@ -68,3 +74,47 @@ export interface UpdateIngredientRequest {
   unitPublicId: string;
   brandPublicId?: string | null;
 }
+
+// ----------------------------------------------------------------------------
+// Branch Price & Stock
+// ----------------------------------------------------------------------------
+
+// Đối chiếu: API.Contract.DTOs.Inventory.Ingredients.UpdateIngredientBranchPriceRequest
+export interface UpdateIngredientBranchPriceRequest {
+  unitPrice: number;
+  currency?: Currency;
+}
+
+// Đối chiếu: API.Contract.DTOs.Inventory.Ingredients.IngredientBranchPriceResponse
+export interface IngredientBranchPriceResponse {
+  ingredientPublicId: string;
+  ingredientName: string;
+  branchPublicId: string;
+  branchCode: string;
+  branchAddress: string;
+  unitPrice: number;
+  currency: string;
+  updatedAt: string;
+}
+
+// Đối chiếu: API.Contract.DTOs.Inventory.Ingredients.UpdateIngredientBranchStockRequest
+export interface UpdateIngredientBranchStockRequest {
+  quantityOnHand: number;
+  reorderLevel?: number | null;
+}
+
+// Đối chiếu: API.Contract.DTOs.Inventory.Ingredients.IngredientBranchStockResponse
+export interface IngredientBranchStockResponse {
+  ingredientPublicId: string;
+  ingredientName: string;
+  branchPublicId: string;
+  branchCode: string;
+  branchAddress: string;
+  quantityOnHand: number;
+  quantityReserved: number;
+  availableQuantity: number;
+  reorderLevel: number;
+  stockStatus: StockStatus;
+  updatedAt: string;
+}
+

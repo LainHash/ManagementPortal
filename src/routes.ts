@@ -11,5 +11,8 @@ export default [
   route("brands", "routes/catalog/brands.tsx"),
   route("units", "routes/catalog/units.tsx"),
   route("catalog", "routes/catalog/index.tsx"),
+
+  // Inventory Routes
+  route("ingredients", "routes/inventory/ingredients.tsx"),
 ] satisfies RouteConfig;
 
