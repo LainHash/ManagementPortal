@@ -15,6 +15,9 @@ export default [
   // Inventory Routes
   route("ingredients", "routes/inventory/ingredients.tsx"),
 
+  // Production / Recipe Routes
+  route("recipes", "routes/production/recipes.tsx"),
+
   // Communication Routes
   route("contact-messages", "routes/communication/contact-messages.tsx"),
 

@@ -106,4 +106,10 @@ export const API_ENDPOINTS = {
     RESERVATIONS: "/schedule/reservations",
     RESERVATION_DETAIL: (id: string) => `/schedule/reservations/${id}`,
   },
+  PRODUCTION: {
+    RECIPES: "/production/recipes",
+    RECIPE_DETAIL: (id: string) => `/production/recipes/${id}`,
+    RECIPE_RESTORE: (id: string) => `/production/recipes/${id}/restore`,
+    RECIPE_PRIMARY: (id: string) => `/production/recipes/${id}/primary`,
+  },
 } as const;

@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router";
-import { UtensilsCrossed, Tags, Layers, Scale, Sparkles, Wheat } from "lucide-react";
+import { UtensilsCrossed, Tags, Layers, Scale, Sparkles, Wheat, ChefHat } from "lucide-react";
 import { cn } from "@/utils/cn";
 
 export interface CatalogNavProps {
@@ -13,6 +13,7 @@ export interface CatalogNavProps {
     totalBrands?: number;
     totalUnits?: number;
     totalIngredients?: number;
+    totalRecipes?: number;
   };
 }
 
@@ -49,6 +50,12 @@ export function CatalogNav({ title, description, actions, stats }: CatalogNavPro
       href: "/ingredients",
       icon: Wheat,
       count: stats?.totalIngredients,
+    },
+    {
+      label: "Công thức định lượng",
+      href: "/recipes",
+      icon: ChefHat,
+      count: stats?.totalRecipes,
     },
   ];
 

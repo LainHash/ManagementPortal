@@ -94,13 +94,19 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
       ],
     },
     {
-      title: "Kho & Nguyên liệu",
+      title: "Kho & Định lượng",
       items: [
         {
           label: "Kho nguyên liệu",
           href: "/ingredients",
           icon: Wheat,
           badge: "Inventory",
+        },
+        {
+          label: "Công thức định lượng",
+          href: "/recipes",
+          icon: ChefHat,
+          badge: "BOM",
         },
       ],
     },
