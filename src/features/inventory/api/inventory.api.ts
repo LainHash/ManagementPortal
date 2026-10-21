@@ -7,7 +7,9 @@ import type {
   IngredientDetailResponse,
   IngredientResponse,
   CreateIngredientCategoryRequest,
+  CreateIngredientPriceRequest,
   CreateIngredientRequest,
+  CreateIngredientStockRequest,
   IngredientBranchPriceResponse,
   IngredientBranchStockResponse,
   UpdateIngredientBranchPriceRequest,
@@ -61,6 +63,16 @@ export const inventoryApi = {
       body: UpdateIngredientBranchStockRequest
     ): Promise<Result<IngredientBranchStockResponse>> => {
       return axiosClient.put(API_ENDPOINTS.INVENTORY.INGREDIENT_BRANCH_STOCK(ingredientId, branchId), body);
+    },
+    createPrice: async (
+      body: CreateIngredientPriceRequest
+    ): Promise<Result<IngredientBranchPriceResponse>> => {
+      return axiosClient.post(API_ENDPOINTS.INVENTORY.INGREDIENT_CREATE_PRICE, body);
+    },
+    createStock: async (
+      body: CreateIngredientStockRequest
+    ): Promise<Result<IngredientBranchStockResponse>> => {
+      return axiosClient.post(API_ENDPOINTS.INVENTORY.INGREDIENT_CREATE_STOCK, body);
     },
   },
 

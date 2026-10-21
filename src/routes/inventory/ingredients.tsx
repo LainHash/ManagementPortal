@@ -229,16 +229,40 @@ export default function IngredientsPage() {
             totalUnits: units.length,
           }}
           actions={
-            <Button
-              onClick={() => {
-                setEditingIngredient(null);
-                setIsFormOpen(true);
-              }}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-md shadow-emerald-600/20"
-            >
-              <Plus className="h-4 w-4" />
-              Thêm nguyên liệu mới
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPriceModalIngredient(null);
+                  setIsPriceModalOpen(true);
+                }}
+                className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 text-xs shadow-xs"
+              >
+                <DollarSign className="mr-1 h-3.5 w-3.5" />
+                Thiết lập giá chi nhánh
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStockModalIngredient(null);
+                  setIsStockModalOpen(true);
+                }}
+                className="text-indigo-600 border-indigo-200 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 text-xs shadow-xs"
+              >
+                <Boxes className="mr-1 h-3.5 w-3.5" />
+                Nhập tồn kho
+              </Button>
+              <Button
+                onClick={() => {
+                  setEditingIngredient(null);
+                  setIsFormOpen(true);
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-md shadow-emerald-600/20 text-xs"
+              >
+                <Plus className="h-4 w-4" />
+                Thêm nguyên liệu mới
+              </Button>
+            </div>
           }
         />
 
@@ -789,6 +813,7 @@ export default function IngredientsPage() {
           setPriceModalIngredient(null);
         }}
         ingredient={priceModalIngredient}
+        ingredients={ingredients}
         branches={branches}
         initialBranchId={selectedBranch}
         onSuccess={(msg) => {
@@ -805,6 +830,7 @@ export default function IngredientsPage() {
           setStockModalIngredient(null);
         }}
         ingredient={stockModalIngredient}
+        ingredients={ingredients}
         branches={branches}
         initialBranchId={selectedBranch}
         onSuccess={(msg) => {

@@ -11,7 +11,8 @@ import { DollarSign, Building2, AlertCircle, Loader2, Wheat, CheckCircle2 } from
 interface IngredientBranchPriceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  ingredient: IngredientResponse | null;
+  ingredient?: IngredientResponse | null;
+  ingredients?: IngredientResponse[];
   branches: BranchResponse[];
   initialBranchId?: string;
   onSuccess: (message: string) => void;
@@ -21,39 +22,76 @@ export function IngredientBranchPriceModal({
   isOpen,
   onClose,
   ingredient,
+  ingredients = [],
   branches,
   initialBranchId,
   onSuccess,
 }: IngredientBranchPriceModalProps) {
+  const [selectedIngredientId, setSelectedIngredientId] = useState<string>("");
   const [selectedBranchId, setSelectedBranchId] = useState<string>("");
   const [unitPrice, setUnitPrice] = useState<string>("");
   const [currency, setCurrency] = useState<string>(Currency.VND);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Active ingredient is either passed directly or picked from ingredients list
+  const activeIngredient = ingredient || ingredients.find((i) => i.id === selectedIngredientId) || null;
+
   useEffect(() => {
-    if (isOpen && ingredient) {
+    if (isOpen) {
+      if (ingredient) {
+        setSelectedIngredientId(ingredient.id);
+        setUnitPrice(
+          ingredient.unitPrice !== undefined && ingredient.unitPrice !== null
+            ? String(ingredient.unitPrice)
+            : ""
+        );
+        setCurrency(ingredient.currency || Currency.VND);
+      } else if (ingredients.length > 0) {
+        setSelectedIngredientId(ingredients[0].id);
+        setUnitPrice(
+          ingredients[0].unitPrice !== undefined && ingredients[0].unitPrice !== null
+            ? String(ingredients[0].unitPrice)
+            : ""
+        );
+        setCurrency(ingredients[0].currency || Currency.VND);
+      } else {
+        setSelectedIngredientId("");
+        setUnitPrice("");
+      }
+
       const defaultBranch =
         initialBranchId && branches.some((b) => b.id === initialBranchId)
           ? initialBranchId
           : branches[0]?.id || "";
 
       setSelectedBranchId(defaultBranch);
-      setUnitPrice(
-        ingredient.unitPrice !== undefined && ingredient.unitPrice !== null
-          ? String(ingredient.unitPrice)
-          : ""
-      );
-      setCurrency(ingredient.currency || Currency.VND);
       setError(null);
     }
-  }, [isOpen, ingredient, initialBranchId, branches]);
+  }, [isOpen, ingredient, ingredients, initialBranchId, branches]);
 
-  if (!ingredient) return null;
+  const handleIngredientChange = (ingId: string) => {
+    setSelectedIngredientId(ingId);
+    const chosen = ingredients.find((i) => i.id === ingId);
+    if (chosen) {
+      setUnitPrice(
+        chosen.unitPrice !== undefined && chosen.unitPrice !== null ? String(chosen.unitPrice) : ""
+      );
+    }
+  };
+
+  const handlePricePreset = (val: number) => {
+    setUnitPrice(String(val));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!activeIngredient) {
+      setError("Vui lòng chọn nguyên liệu cần thiết lập giá.");
+      return;
+    }
 
     if (!selectedBranchId) {
       setError("Vui lòng chọn chi nhánh áp dụng giá.");
@@ -68,20 +106,21 @@ export function IngredientBranchPriceModal({
 
     setIsLoading(true);
     try {
-      await inventoryApi.ingredients.updateBranchPrice(
-        ingredient.id,
-        selectedBranchId,
-        {
-          unitPrice: priceNum,
-          currency: Currency.VND,
-        }
-      );
+      // Use createPrice endpoint which implicitly creates/binds IngredientBranch if not yet existing
+      await inventoryApi.ingredients.createPrice({
+        ingredientPublicId: activeIngredient.id,
+        branchPublicId: selectedBranchId,
+        unitPrice: priceNum,
+        currency: Currency.VND,
+      });
 
       const branchName =
-        branches.find((b) => b.id === selectedBranchId)?.address || "chi nhánh đã chọn";
+        branches.find((b) => b.id === selectedBranchId)?.address ||
+        branches.find((b) => b.id === selectedBranchId)?.city ||
+        "chi nhánh đã chọn";
 
       onSuccess(
-        `Đã cập nhật đơn giá nguyên liệu "${ingredient.name}" tại ${branchName} thành ${priceNum.toLocaleString("vi-VN")} đ.`
+        `Đã thiết lập đơn giá nguyên liệu "${activeIngredient.name}" tại ${branchName} thành ${priceNum.toLocaleString("vi-VN")} đ.`
       );
       onClose();
     } catch (err: any) {
@@ -107,115 +146,160 @@ export function IngredientBranchPriceModal({
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Cập nhật giá nguyên liệu
+              Thiết lập giá nguyên liệu chi nhánh
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Thiết lập đơn giá cho nguyên liệu theo từng chi nhánh
+              Thiết lập đơn giá mua / hạch toán nguyên liệu theo chi nhánh (tự động liên kết cơ sở)
             </p>
           </div>
         </div>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Ingredient quick info */}
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs dark:bg-slate-800">
-            <Wheat className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-              {ingredient.name}
-            </h4>
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span>Đơn vị: <strong className="text-slate-700 dark:text-slate-300">{ingredient.unitSymbol || "kg"}</strong></span>
-              <span>•</span>
-              <span>{ingredient.categoryName}</span>
-            </div>
-          </div>
-        </div>
-
         {error && (
-          <div className="flex items-center gap-2 rounded-lg bg-rose-50 p-3 text-xs text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+          <div className="flex items-start gap-2.5 rounded-lg bg-red-50 p-3 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300 border border-red-200 dark:border-red-900/50">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Branch select */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Chi nhánh áp dụng <span className="text-rose-500">*</span>
-          </label>
-          <div className="relative">
-            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+        {/* Ingredient selector if not fixed */}
+        {!ingredient && ingredients.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Wheat className="h-3.5 w-3.5 text-emerald-600" />
+              Chọn nguyên liệu <span className="text-red-500">*</span>
+            </label>
             <select
-              value={selectedBranchId}
-              onChange={(e) => setSelectedBranchId(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-sm text-slate-900 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              value={selectedIngredientId}
+              onChange={(e) => handleIngredientChange(e.target.value)}
+              disabled={isLoading}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
             >
-              {branches.length === 0 ? (
-                <option value="">Không có chi nhánh nào</option>
-              ) : (
-                branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.branchCode} - {b.address}
-                  </option>
-                ))
-              )}
+              {ingredients.map((ing) => (
+                <option key={ing.id} value={ing.id}>
+                  {ing.name} ({ing.unitSymbol || "Đơn vị"} - {ing.categoryName})
+                </option>
+              ))}
             </select>
           </div>
-          <p className="mt-1 text-[11px] text-slate-400">
-            Mỗi chi nhánh có thể áp dụng giá nhập/mua nguyên liệu khác nhau.
-          </p>
+        )}
+
+        {/* Ingredient quick info */}
+        {activeIngredient && (
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs dark:bg-slate-800">
+              <Wheat className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                {activeIngredient.name}
+              </h4>
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span>
+                  Đơn vị:{" "}
+                  <strong className="text-slate-700 dark:text-slate-300">
+                    {activeIngredient.unitSymbol || "kg"}
+                  </strong>
+                </span>
+                <span>•</span>
+                <span>{activeIngredient.categoryName}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Branch selection */}
+        <div className="space-y-1.5">
+          <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <Building2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            Chi nhánh áp dụng <span className="text-red-500">*</span>
+          </label>
+          <select
+            value={selectedBranchId}
+            onChange={(e) => setSelectedBranchId(e.target.value)}
+            disabled={isLoading || branches.length === 0}
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-xs focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+          >
+            {branches.length === 0 ? (
+              <option value="">Không có chi nhánh khả dụng</option>
+            ) : (
+              branches.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.address ? `${b.address} (${b.city})` : b.city} [Mã: {b.branchCode}]
+                </option>
+              ))
+            )}
+          </select>
         </div>
 
-        {/* Unit Price input */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Đơn vị giá (VND/{ingredient.unitSymbol || "đơn vị"}) <span className="text-rose-500">*</span>
+        {/* Price Input */}
+        <div className="space-y-1.5">
+          <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <DollarSign className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            Đơn giá hạch toán / mua vào (VNĐ) <span className="text-red-500">*</span>
           </label>
           <div className="relative">
             <Input
               type="number"
               min="0"
-              step="100"
+              step="500"
               value={unitPrice}
               onChange={(e) => setUnitPrice(e.target.value)}
-              placeholder="VD: 45000"
-              className="pl-9 pr-14 font-semibold text-slate-900 dark:text-white"
+              placeholder="Ví dụ: 30000"
+              disabled={isLoading}
               required
+              className="pr-12 text-base font-semibold text-emerald-600 dark:text-emerald-400"
             />
-            <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
               VNĐ
             </span>
           </div>
+
+          {/* Quick presets */}
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {[10000, 25000, 50000, 80000, 120000, 200000].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => handlePricePreset(preset)}
+                className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              >
+                {preset.toLocaleString("vi-VN")} đ
+              </button>
+            ))}
+          </div>
+
           {unitPrice && !isNaN(Number(unitPrice)) && Number(unitPrice) > 0 && (
-            <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-              = {Number(unitPrice).toLocaleString("vi-VN")} đ / {ingredient.unitSymbol || "đơn vị"}
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              Định dạng hiển thị:{" "}
+              <strong className="text-slate-700 dark:text-slate-300">
+                {Number(unitPrice).toLocaleString("vi-VN")} đ
+              </strong>{" "}
+              / {activeIngredient?.unitSymbol || "đơn vị"}
             </p>
           )}
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+        {/* Modal actions */}
+        <div className="mt-6 flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
           <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
             Hủy
           </Button>
           <Button
             type="submit"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
-            disabled={isLoading || branches.length === 0}
+            disabled={isLoading || branches.length === 0 || !activeIngredient}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
           >
             {isLoading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Đang lưu...
+                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                Đang lưu giá...
               </>
             ) : (
               <>
-                <CheckCircle2 className="h-4 w-4" />
-                Lưu đơn giá
+                <CheckCircle2 className="mr-1.5 h-4 w-4" />
+                Lưu giá nguyên liệu
               </>
             )}
           </Button>

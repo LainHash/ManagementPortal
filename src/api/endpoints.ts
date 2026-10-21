@@ -25,6 +25,8 @@ export const API_ENDPOINTS = {
     PRODUCT_RESTORE: (id: string) => `/catalog/products/${id}/restore`,
     PRODUCT_BRANCH_PRICE: (productId: string, branchId: string) => `/catalog/products/${productId}/branches/${branchId}/price`,
     PRODUCT_BRANCH_STOCK: (productId: string, branchId: string) => `/catalog/products/${productId}/branches/${branchId}/stock`,
+    PRODUCT_CREATE_PRICE: "/catalog/products/price",
+    PRODUCT_CREATE_STOCK: "/catalog/products/stock",
 
     CATEGORIES: "/catalog/categories",
     CATEGORY_DETAIL: (id: string) => `/catalog/categories/${id}`,
@@ -44,6 +46,8 @@ export const API_ENDPOINTS = {
     INGREDIENT_RESTORE: (id: string) => `/inventory/ingredients/${id}/restore`,
     INGREDIENT_BRANCH_PRICE: (ingredientId: string, branchId: string) => `/inventory/ingredients/${ingredientId}/branches/${branchId}/price`,
     INGREDIENT_BRANCH_STOCK: (ingredientId: string, branchId: string) => `/inventory/ingredients/${ingredientId}/branches/${branchId}/stock`,
+    INGREDIENT_CREATE_PRICE: "/inventory/ingredients/price",
+    INGREDIENT_CREATE_STOCK: "/inventory/ingredients/stock",
 
     CATEGORIES: "/inventory/categories",
     CATEGORY_DETAIL: (id: string) => `/inventory/categories/${id}`,

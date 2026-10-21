@@ -19,7 +19,8 @@ import {
 interface IngredientBranchStockModalProps {
   isOpen: boolean;
   onClose: () => void;
-  ingredient: IngredientResponse | null;
+  ingredient?: IngredientResponse | null;
+  ingredients?: IngredientResponse[];
   branches: BranchResponse[];
   initialBranchId?: string;
   onSuccess: (message: string) => void;
@@ -29,39 +30,73 @@ export function IngredientBranchStockModal({
   isOpen,
   onClose,
   ingredient,
+  ingredients = [],
   branches,
   initialBranchId,
   onSuccess,
 }: IngredientBranchStockModalProps) {
+  const [selectedIngredientId, setSelectedIngredientId] = useState<string>("");
   const [selectedBranchId, setSelectedBranchId] = useState<string>("");
   const [quantityOnHand, setQuantityOnHand] = useState<string>("");
   const [reorderLevel, setReorderLevel] = useState<string>("10");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Active ingredient is either passed directly or picked from ingredients list
+  const activeIngredient = ingredient || ingredients.find((i) => i.id === selectedIngredientId) || null;
+
   useEffect(() => {
-    if (isOpen && ingredient) {
+    if (isOpen) {
+      if (ingredient) {
+        setSelectedIngredientId(ingredient.id);
+        setQuantityOnHand(
+          ingredient.availableQuantity !== undefined && ingredient.availableQuantity !== null
+            ? String(ingredient.availableQuantity)
+            : ""
+        );
+      } else if (ingredients.length > 0) {
+        setSelectedIngredientId(ingredients[0].id);
+        setQuantityOnHand(
+          ingredients[0].availableQuantity !== undefined && ingredients[0].availableQuantity !== null
+            ? String(ingredients[0].availableQuantity)
+            : ""
+        );
+      } else {
+        setSelectedIngredientId("");
+        setQuantityOnHand("");
+      }
+
       const defaultBranch =
         initialBranchId && branches.some((b) => b.id === initialBranchId)
           ? initialBranchId
           : branches[0]?.id || "";
 
       setSelectedBranchId(defaultBranch);
-      setQuantityOnHand(
-        ingredient.availableQuantity !== undefined && ingredient.availableQuantity !== null
-          ? String(ingredient.availableQuantity)
-          : ""
-      );
       setReorderLevel("10");
       setError(null);
     }
-  }, [isOpen, ingredient, initialBranchId, branches]);
+  }, [isOpen, ingredient, ingredients, initialBranchId, branches]);
 
-  if (!ingredient) return null;
+  const handleIngredientChange = (ingId: string) => {
+    setSelectedIngredientId(ingId);
+    const chosen = ingredients.find((i) => i.id === ingId);
+    if (chosen) {
+      setQuantityOnHand(
+        chosen.availableQuantity !== undefined && chosen.availableQuantity !== null
+          ? String(chosen.availableQuantity)
+          : ""
+      );
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!activeIngredient) {
+      setError("Vui lòng chọn nguyên liệu cần cập nhật tồn kho.");
+      return;
+    }
 
     if (!selectedBranchId) {
       setError("Vui lòng chọn chi nhánh áp dụng tồn kho.");
@@ -82,20 +117,21 @@ export function IngredientBranchStockModal({
 
     setIsLoading(true);
     try {
-      await inventoryApi.ingredients.updateBranchStock(
-        ingredient.id,
-        selectedBranchId,
-        {
-          quantityOnHand: qty,
-          reorderLevel: reorder,
-        }
-      );
+      // Use createStock endpoint which implicitly creates/binds IngredientBranch if not yet existing
+      await inventoryApi.ingredients.createStock({
+        ingredientPublicId: activeIngredient.id,
+        branchPublicId: selectedBranchId,
+        quantityOnHand: qty,
+        reorderLevel: reorder,
+      });
 
       const branchName =
-        branches.find((b) => b.id === selectedBranchId)?.address || "chi nhánh đã chọn";
+        branches.find((b) => b.id === selectedBranchId)?.address ||
+        branches.find((b) => b.id === selectedBranchId)?.city ||
+        "chi nhánh đã chọn";
 
       onSuccess(
-        `Đã cập nhật tồn kho nguyên liệu "${ingredient.name}" tại ${branchName}: ${qty} ${ingredient.unitSymbol || "đơn vị"} (Cảnh báo: ${reorder}).`
+        `Đã cập nhật tồn kho nguyên liệu "${activeIngredient.name}" tại ${branchName}: ${qty} ${activeIngredient.unitSymbol || "đơn vị"} (Cảnh báo: ${reorder}).`
       );
       onClose();
     } catch (err: any) {
@@ -124,37 +160,66 @@ export function IngredientBranchStockModal({
           </div>
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
-              Cập nhật tồn kho nguyên liệu
+              Cập nhật tồn kho nguyên liệu chi nhánh
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Kiểm kê và điều chỉnh số lượng tồn kho theo chi nhánh
+              Kiểm kê và điều chỉnh số lượng tồn kho theo chi nhánh (tự động liên kết cơ sở)
             </p>
           </div>
         </div>
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Ingredient quick info */}
-        <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs dark:bg-slate-800">
-            <Wheat className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-white">
-              {ingredient.name}
-            </h4>
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span>Đơn vị: <strong className="text-slate-700 dark:text-slate-300">{ingredient.unitSymbol || "đơn vị"}</strong></span>
-              <span>•</span>
-              <span>{ingredient.categoryName}</span>
-            </div>
-          </div>
-        </div>
-
         {error && (
           <div className="flex items-center gap-2 rounded-lg bg-rose-50 p-3 text-xs text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:border-rose-900 dark:text-rose-300">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {/* Ingredient selector if not fixed */}
+        {!ingredient && ingredients.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Wheat className="h-3.5 w-3.5 text-indigo-600" />
+              Chọn nguyên liệu <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={selectedIngredientId}
+              onChange={(e) => handleIngredientChange(e.target.value)}
+              disabled={isLoading}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+            >
+              {ingredients.map((ing) => (
+                <option key={ing.id} value={ing.id}>
+                  {ing.name} ({ing.unitSymbol || "Đơn vị"} - {ing.categoryName})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Ingredient quick info */}
+        {activeIngredient && (
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white shadow-xs dark:bg-slate-800">
+              <Wheat className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                {activeIngredient.name}
+              </h4>
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span>
+                  Đơn vị:{" "}
+                  <strong className="text-slate-700 dark:text-slate-300">
+                    {activeIngredient.unitSymbol || "đơn vị"}
+                  </strong>
+                </span>
+                <span>•</span>
+                <span>{activeIngredient.categoryName}</span>
+              </div>
+            </div>
           </div>
         )}
 
@@ -175,7 +240,7 @@ export function IngredientBranchStockModal({
               ) : (
                 branches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.branchCode} - {b.address}
+                    {b.branchCode} - {b.address ? `${b.address} (${b.city})` : b.city}
                   </option>
                 ))
               )}
@@ -186,7 +251,7 @@ export function IngredientBranchStockModal({
         {/* Quantity on hand input */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-            Số lượng tồn kho thực tế ({ingredient.unitSymbol || "đơn vị"}) <span className="text-rose-500">*</span>
+            Số lượng tồn kho thực tế ({activeIngredient?.unitSymbol || "đơn vị"}) <span className="text-rose-500">*</span>
           </label>
           <div className="relative">
             <Input
@@ -201,7 +266,7 @@ export function IngredientBranchStockModal({
             />
             <Boxes className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
-              {ingredient.unitSymbol || "đơn vị"}
+              {activeIngredient?.unitSymbol || "đơn vị"}
             </span>
           </div>
         </div>
@@ -223,10 +288,11 @@ export function IngredientBranchStockModal({
             />
             <AlertTriangle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
-              {ingredient.unitSymbol || "đơn vị"}
+              {activeIngredient?.unitSymbol || "đơn vị"}
             </span>
           </div>
-          <p className="mt-1 text-[11px] text-slate-400">
+          <p className="mt-1 text-[11px] text-slate-400 flex items-center gap-1">
+            <Info className="h-3 w-3 shrink-0" />
             Hệ thống sẽ gắn thẻ cảnh báo &quot;Sắp hết hàng&quot; khi lượng khả dụng ≤ mức này.
           </p>
         </div>
@@ -253,17 +319,17 @@ export function IngredientBranchStockModal({
           <Button
             type="submit"
             className="bg-indigo-600 hover:bg-indigo-700 text-white gap-1.5"
-            disabled={isLoading || branches.length === 0}
+            disabled={isLoading || branches.length === 0 || !activeIngredient}
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Đang lưu...
+                Đang lưu tồn kho...
               </>
             ) : (
               <>
                 <CheckCircle2 className="h-4 w-4" />
-                Lưu tồn kho
+                Lưu tồn kho chi nhánh
               </>
             )}
           </Button>

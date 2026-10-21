@@ -6,7 +6,9 @@ import type {
   BrandResponse,
   CreateBrandRequest,
   CreateProductCategoryRequest,
+  CreateProductPriceRequest,
   CreateProductRequest,
+  CreateProductStockRequest,
   CreateUnitRequest,
   ProductBranchPriceResponse,
   ProductBranchStockResponse,
@@ -28,6 +30,7 @@ export interface GetAllProductsParams extends PaginationQuery {
   categoryId?: string;
   brandId?: string;
   branchId?: string;
+  isRecommended?: boolean;
 }
 
 export const catalogApi = {
@@ -68,6 +71,16 @@ export const catalogApi = {
       body: UpdateProductBranchStockRequest
     ): Promise<Result<ProductBranchStockResponse>> => {
       return axiosClient.put(API_ENDPOINTS.CATALOG.PRODUCT_BRANCH_STOCK(productId, branchId), body);
+    },
+    createPrice: async (
+      body: CreateProductPriceRequest
+    ): Promise<Result<ProductBranchPriceResponse>> => {
+      return axiosClient.post(API_ENDPOINTS.CATALOG.PRODUCT_CREATE_PRICE, body);
+    },
+    createStock: async (
+      body: CreateProductStockRequest
+    ): Promise<Result<ProductBranchStockResponse>> => {
+      return axiosClient.post(API_ENDPOINTS.CATALOG.PRODUCT_CREATE_STOCK, body);
     },
   },
 

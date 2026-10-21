@@ -36,6 +36,7 @@ export interface RecipeFormModalProps {
   onClose: () => void;
   onSubmit: (data: CreateRecipeRequest | UpdateRecipeRequest, id?: string) => Promise<void>;
   initialData?: RecipeResponse | RecipeDetailResponse | null;
+  defaultProductId?: string;
   products: ProductResponse[];
   ingredients: IngredientResponse[];
   isLoading?: boolean;
@@ -46,6 +47,7 @@ export function RecipeFormModal({
   onClose,
   onSubmit,
   initialData,
+  defaultProductId,
   products,
   ingredients,
   isLoading = false,
@@ -108,13 +110,17 @@ export function RecipeFormModal({
       }
     } else {
       // Create mode
-      setProductId(products[0]?.id || "");
+      const selectedDefault =
+        defaultProductId && products.some((p) => p.id === defaultProductId)
+          ? defaultProductId
+          : products[0]?.id || "";
+      setProductId(selectedDefault);
       setInstructions("");
       setIsPrimary(true);
       setRows([{ ingredientPublicId: ingredients[0]?.id || "", quantity: 1 }]);
       setError(null);
     }
-  }, [isOpen, initialData, products, ingredients]);
+  }, [isOpen, initialData, defaultProductId, products, ingredients]);
 
   // Handle adding an ingredient row
   const handleAddRow = () => {

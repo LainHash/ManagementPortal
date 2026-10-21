@@ -16,4 +16,5 @@ export interface HomeResponse {
   brands: BrandResponse[];
   productCategories: ProductCategoryResponse[];
   branches: BranchResponse[];
+  recommendedProduct: ProductResponse[];
 }

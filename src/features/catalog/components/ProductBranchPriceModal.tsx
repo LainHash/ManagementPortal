@@ -6,12 +6,13 @@ import { catalogApi } from "../api/catalog.api";
 import type { ProductResponse } from "@/types/catalog.types";
 import type { BranchResponse } from "@/types/territory.types";
 import { Currency } from "@/types/enums";
-import { DollarSign, Building2, AlertCircle, Loader2, UtensilsCrossed, CheckCircle2 } from "lucide-react";
+import { DollarSign, Building2, AlertCircle, Loader2, UtensilsCrossed, CheckCircle2, Search } from "lucide-react";
 
 interface ProductBranchPriceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  product: ProductResponse | null;
+  product?: ProductResponse | null;
+  products?: ProductResponse[];
   branches: BranchResponse[];
   initialBranchId?: string;
   onSuccess: (message: string) => void;
@@ -21,18 +22,44 @@ export function ProductBranchPriceModal({
   isOpen,
   onClose,
   product,
+  products = [],
   branches,
   initialBranchId,
   onSuccess,
 }: ProductBranchPriceModalProps) {
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [selectedBranchId, setSelectedBranchId] = useState<string>("");
   const [unitPrice, setUnitPrice] = useState<string>("");
   const [currency, setCurrency] = useState<string>(Currency.VND);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Active product is either passed directly or picked from products list
+  const activeProduct = product || products.find((p) => p.id === selectedProductId) || null;
+
   useEffect(() => {
-    if (isOpen && product) {
+    if (isOpen) {
+      if (product) {
+        setSelectedProductId(product.id);
+        setUnitPrice(
+          product.unitPrice !== undefined && product.unitPrice !== null
+            ? String(product.unitPrice)
+            : ""
+        );
+        setCurrency(product.currency || Currency.VND);
+      } else if (products.length > 0) {
+        setSelectedProductId(products[0].id);
+        setUnitPrice(
+          products[0].unitPrice !== undefined && products[0].unitPrice !== null
+            ? String(products[0].unitPrice)
+            : ""
+        );
+        setCurrency(products[0].currency || Currency.VND);
+      } else {
+        setSelectedProductId("");
+        setUnitPrice("");
+      }
+
       // Default to initialBranchId or first available branch
       const defaultBranch =
         initialBranchId && branches.some((b) => b.id === initialBranchId)
@@ -40,17 +67,33 @@ export function ProductBranchPriceModal({
           : branches[0]?.id || "";
 
       setSelectedBranchId(defaultBranch);
-      setUnitPrice(product.unitPrice !== undefined && product.unitPrice !== null ? String(product.unitPrice) : "");
-      setCurrency(product.currency || Currency.VND);
       setError(null);
     }
-  }, [isOpen, product, initialBranchId, branches]);
+  }, [isOpen, product, products, initialBranchId, branches]);
 
-  if (!product) return null;
+  // When changing product in dropdown mode, sync default price
+  const handleProductChange = (prodId: string) => {
+    setSelectedProductId(prodId);
+    const chosen = products.find((p) => p.id === prodId);
+    if (chosen) {
+      setUnitPrice(
+        chosen.unitPrice !== undefined && chosen.unitPrice !== null ? String(chosen.unitPrice) : ""
+      );
+    }
+  };
+
+  const handlePricePreset = (val: number) => {
+    setUnitPrice(String(val));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (!activeProduct) {
+      setError("Vui lòng chọn món ăn cần thiết lập giá.");
+      return;
+    }
 
     if (!selectedBranchId) {
       setError("Vui lòng chọn chi nhánh áp dụng giá.");
@@ -65,20 +108,21 @@ export function ProductBranchPriceModal({
 
     setIsLoading(true);
     try {
-      const res = await catalogApi.products.updateBranchPrice(
-        product.id,
-        selectedBranchId,
-        {
-          unitPrice: priceNum,
-          currency: Currency.VND,
-        }
-      );
+      // Use createPrice endpoint which implicitly creates/binds ProductBranch if not yet existing
+      await catalogApi.products.createPrice({
+        productPublicId: activeProduct.id,
+        branchPublicId: selectedBranchId,
+        unitPrice: priceNum,
+        currency: Currency.VND,
+      });
 
       const branchName =
-        branches.find((b) => b.id === selectedBranchId)?.address || "chi nhánh đã chọn";
+        branches.find((b) => b.id === selectedBranchId)?.address ||
+        branches.find((b) => b.id === selectedBranchId)?.city ||
+        "chi nhánh đã chọn";
 
       onSuccess(
-        `Đã cập nhật giá bán món "${product.name}" tại ${branchName} thành ${priceNum.toLocaleString("vi-VN")} đ.`
+        `Đã thiết lập giá bán món "${activeProduct.name}" tại ${branchName} thành ${priceNum.toLocaleString("vi-VN")} đ.`
       );
       onClose();
     } catch (err: any) {
@@ -98,12 +142,12 @@ export function ProductBranchPriceModal({
       onClose={onClose}
       maxWidth="md"
       title={
-        <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+        <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
           <DollarSign className="h-5 w-5" />
-          <span>Cập nhật Giá bán theo Chi nhánh</span>
+          <span>Thiết lập Giá bán theo Chi nhánh</span>
         </div>
       }
-      description={`Thiết lập đơn giá niêm yết áp dụng riêng cho từng chi nhánh của món ăn.`}
+      description="Thiết lập đơn giá niêm yết áp dụng riêng cho từng chi nhánh. Bản ghi chi nhánh sẽ tự động được liên kết."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -113,30 +157,54 @@ export function ProductBranchPriceModal({
           </div>
         )}
 
-        {/* Product mini info */}
-        <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/50">
-          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
-            {product.primaryImage?.image?.url ? (
-              <img
-                src={product.primaryImage.image.url}
-                alt={product.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <UtensilsCrossed className="h-5 w-5 text-slate-400" />
-            )}
+        {/* Product selector if not fixed */}
+        {!product && products.length > 0 && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <UtensilsCrossed className="h-3.5 w-3.5 text-indigo-600" />
+              Chọn món ăn <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={selectedProductId}
+              onChange={(e) => handleProductChange(e.target.value)}
+              disabled={isLoading}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus:outline-hidden focus:ring-1 focus:ring-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+            >
+              {products.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.categoryName || "Chưa phân loại"})
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="text-sm font-semibold text-slate-900 truncate dark:text-white">
-              {product.name}
-            </h4>
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span>{product.categoryName}</span>
-              <span>•</span>
-              <span>ĐVT: {product.unitSymbol || "Phần"}</span>
+        )}
+
+        {/* Product mini info card */}
+        {activeProduct && (
+          <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/50">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-white dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700">
+              {activeProduct.primaryImage?.image?.url ? (
+                <img
+                  src={activeProduct.primaryImage.image.url}
+                  alt={activeProduct.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <UtensilsCrossed className="h-5 w-5 text-slate-400" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="text-sm font-semibold text-slate-900 truncate dark:text-white">
+                {activeProduct.name}
+              </h4>
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span>{activeProduct.categoryName}</span>
+                <span>•</span>
+                <span>ĐVT: {activeProduct.unitSymbol || "Phần"}</span>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Branch selection */}
         <div className="space-y-1.5">
@@ -184,13 +252,28 @@ export function ProductBranchPriceModal({
               VNĐ
             </span>
           </div>
+
+          {/* Quick presets */}
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {[25000, 35000, 45000, 55000, 75000, 99000, 150000].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => handlePricePreset(preset)}
+                className="rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-medium text-slate-600 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+              >
+                {preset.toLocaleString("vi-VN")} đ
+              </button>
+            ))}
+          </div>
+
           {unitPrice && !isNaN(Number(unitPrice)) && Number(unitPrice) > 0 && (
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
               Định dạng hiển thị:{" "}
               <strong className="text-slate-700 dark:text-slate-300">
                 {Number(unitPrice).toLocaleString("vi-VN")} đ
               </strong>{" "}
-              / {product.unitSymbol || "Phần"}
+              / {activeProduct?.unitSymbol || "Phần"}
             </p>
           )}
         </div>
@@ -202,8 +285,8 @@ export function ProductBranchPriceModal({
           </Button>
           <Button
             type="submit"
-            disabled={isLoading || branches.length === 0}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+            disabled={isLoading || branches.length === 0 || !activeProduct}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
           >
             {isLoading ? (
               <>
@@ -213,7 +296,7 @@ export function ProductBranchPriceModal({
             ) : (
               <>
                 <CheckCircle2 className="mr-1.5 h-4 w-4" />
-                Cập nhật giá
+                Lưu giá chi nhánh
               </>
             )}
           </Button>

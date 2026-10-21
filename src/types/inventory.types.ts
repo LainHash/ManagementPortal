@@ -118,3 +118,19 @@ export interface IngredientBranchStockResponse {
   updatedAt: string;
 }
 
+// Đối chiếu: API.Contract.DTOs.Inventory.Ingredients.CreateIngredientPriceRequest
+export interface CreateIngredientPriceRequest {
+  ingredientPublicId: string;
+  branchPublicId: string;
+  unitPrice: number;
+  currency?: Currency;
+}
+
+// Đối chiếu: API.Contract.DTOs.Inventory.Ingredients.CreateIngredientStockRequest
+export interface CreateIngredientStockRequest {
+  ingredientPublicId: string;
+  branchPublicId: string;
+  quantityOnHand: number;
+  reorderLevel?: number | null;
+}
+

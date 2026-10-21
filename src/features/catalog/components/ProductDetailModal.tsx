@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { catalogApi } from "../api/catalog.api";
 import { StockStatusBadge, InventoryTypeBadge } from "./Badges";
 import type { ProductDetailResponse, ProductResponse } from "@/types/catalog.types";
+import { InventoryType } from "@/types/enums";
 import {
   UtensilsCrossed,
   Tags,
@@ -17,6 +19,7 @@ import {
   Loader2,
   Calendar,
   Boxes,
+  ArrowRight,
 } from "lucide-react";
 
 interface ProductDetailModalProps {
@@ -38,6 +41,7 @@ export function ProductDetailModal({
   onUpdatePrice,
   onUpdateStock,
 }: ProductDetailModalProps) {
+  const navigate = useNavigate();
   const [detail, setDetail] = useState<ProductDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeImageIndex, setActiveImageIndex] = useState<number>(0);
@@ -214,23 +218,38 @@ export function ProductDetailModal({
               {detail.recipes.map((recipe) => (
                 <div
                   key={recipe.id}
-                  className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900"
+                  className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900"
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-900 dark:text-white">
-                      {recipe.productName}
-                    </span>
-                    {recipe.isPrimary && (
-                      <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
-                        Công thức chính
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {recipe.productName}
                       </span>
+                      {recipe.isPrimary && (
+                        <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
+                          Công thức chính
+                        </span>
+                      )}
+                    </div>
+                    {recipe.instructions && (
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                        {recipe.instructions}
+                      </p>
                     )}
                   </div>
-                  {recipe.instructions && (
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {recipe.instructions}
-                    </p>
-                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      onClose();
+                      navigate(`/recipes?productId=${product.id}&recipeId=${recipe.id}`);
+                    }}
+                    className="ml-2 text-indigo-600 hover:text-indigo-700 text-xs gap-1"
+                  >
+                    <span>Xem định mức</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               ))}
             </div>
@@ -262,10 +281,23 @@ export function ProductDetailModal({
                   onClose();
                   onUpdateStock(product);
                 }}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400"
+                className={
+                  product.inventoryType === InventoryType.MadeToOrder
+                    ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400"
+                    : "text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400"
+                }
               >
-                <Boxes className="mr-1.5 h-4 w-4" />
-                Chỉnh tồn kho
+                {product.inventoryType === InventoryType.MadeToOrder ? (
+                  <>
+                    <ChefHat className="mr-1.5 h-4 w-4" />
+                    Công thức định lượng
+                  </>
+                ) : (
+                  <>
+                    <Boxes className="mr-1.5 h-4 w-4" />
+                    Chỉnh tồn kho
+                  </>
+                )}
               </Button>
             )}
           </div>

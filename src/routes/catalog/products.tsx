@@ -36,6 +36,7 @@ import {
   AlertTriangle,
   DollarSign,
   Boxes,
+  ChefHat,
 } from "lucide-react";
 
 export function meta() {
@@ -260,10 +261,34 @@ export default function ProductsPage() {
             totalUnits: units.length,
           }}
           actions={
-            <Button onClick={handleOpenCreate} className="shadow-md shadow-indigo-600/20">
-              <Plus className="mr-1.5 h-4 w-4" />
-              Thêm món mới
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPriceModalProduct(null);
+                  setIsPriceModalOpen(true);
+                }}
+                className="text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 text-xs shadow-xs"
+              >
+                <DollarSign className="mr-1 h-3.5 w-3.5" />
+                Thiết lập giá chi nhánh
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStockModalProduct(null);
+                  setIsStockModalOpen(true);
+                }}
+                className="text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 text-xs shadow-xs"
+              >
+                <Boxes className="mr-1 h-3.5 w-3.5" />
+                Cập nhật tồn kho
+              </Button>
+              <Button onClick={handleOpenCreate} className="shadow-md shadow-indigo-600/20 text-xs">
+                <Plus className="mr-1.5 h-4 w-4" />
+                Thêm món mới
+              </Button>
+            </div>
           }
         />
 
@@ -576,10 +601,22 @@ export default function ProductsPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleOpenUpdateStock(prod)}
-                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/40"
-                            title="Cập nhật tồn kho theo chi nhánh"
+                            className={
+                              prod.inventoryType === InventoryType.MadeToOrder
+                                ? "h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40"
+                                : "h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/40"
+                            }
+                            title={
+                              prod.inventoryType === InventoryType.MadeToOrder
+                                ? "Món chế biến (MadeToOrder) - Xem công thức định lượng (Recipe / BOM)"
+                                : "Cập nhật tồn kho theo chi nhánh"
+                            }
                           >
-                            <Boxes className="h-4 w-4" />
+                            {prod.inventoryType === InventoryType.MadeToOrder ? (
+                              <ChefHat className="h-4 w-4" />
+                            ) : (
+                              <Boxes className="h-4 w-4" />
+                            )}
                           </Button>
                           <Button
                             variant="ghost"
@@ -691,6 +728,7 @@ export default function ProductsPage() {
             setPriceModalProduct(null);
           }}
           product={priceModalProduct}
+          products={products}
           branches={branches}
           initialBranchId={selectedBranch}
           onSuccess={handlePriceSuccess}
@@ -703,6 +741,7 @@ export default function ProductsPage() {
             setStockModalProduct(null);
           }}
           product={stockModalProduct}
+          products={products}
           branches={branches}
           initialBranchId={selectedBranch}
           onSuccess={handleStockSuccess}

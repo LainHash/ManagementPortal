@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router";
 import { AdminLayout } from "@/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,12 +56,17 @@ export function meta() {
 }
 
 export default function RecipesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const productIdParam = searchParams.get("productId");
+  const recipeIdParam = searchParams.get("recipeId");
+  const createParam = searchParams.get("create");
+
   // View mode
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
 
   // Filter & Search states
   const [keyword, setKeyword] = useState<string>("");
-  const [selectedProduct, setSelectedProduct] = useState<string>("");
+  const [selectedProduct, setSelectedProduct] = useState<string>(productIdParam || "");
   const [selectedPrimary, setSelectedPrimary] = useState<string>("all"); // "all" | "primary" | "secondary"
 
   // Pagination states
@@ -103,6 +109,21 @@ export default function RecipesPage() {
     };
     loadOptions();
   }, []);
+
+  // Sync URL query params with modals and filter
+  useEffect(() => {
+    if (productIdParam) {
+      setSelectedProduct(productIdParam);
+    }
+    if (recipeIdParam) {
+      setViewingRecipeId(recipeIdParam);
+      setIsDetailOpen(true);
+    }
+    if (createParam === "true") {
+      setEditingRecipe(null);
+      setIsFormOpen(true);
+    }
+  }, [productIdParam, recipeIdParam, createParam]);
 
   // Fetch recipes
   const fetchRecipes = useCallback(async () => {
@@ -341,6 +362,40 @@ export default function RecipesPage() {
             </div>
           </Card>
         </div>
+
+        {/* Filtered by Product Banner if active */}
+        {selectedProduct && (
+          <div className="flex items-center justify-between rounded-xl border border-indigo-200 bg-indigo-50/70 p-3.5 text-xs text-indigo-900 dark:border-indigo-900/50 dark:bg-indigo-950/40 dark:text-indigo-200">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs">
+                <ChefHat className="h-4 w-4" />
+              </div>
+              <div>
+                <span className="font-semibold text-sm">
+                  Đang xem công thức định lượng món:{" "}
+                  <span className="text-indigo-600 dark:text-indigo-400">
+                    {products.find((p) => p.id === selectedProduct)?.name || "Món đã chọn"}
+                  </span>
+                </span>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Chỉ các công thức định lượng (Recipe / BOM) gắn với món ăn này được hiển thị bên dưới.
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedProduct("");
+                setSearchParams({});
+              }}
+              className="h-8 text-xs border-indigo-200 hover:bg-white dark:border-indigo-800"
+            >
+              Xem tất cả món
+            </Button>
+          </div>
+        )}
 
         {/* Filter & Toolbar Card */}
         <Card className="border border-slate-200/80 bg-white/80 p-4 shadow-xs backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/80">
@@ -661,6 +716,7 @@ export default function RecipesPage() {
           }}
           onSubmit={handleFormSubmit}
           initialData={editingRecipe}
+          defaultProductId={productIdParam || selectedProduct || undefined}
           products={products}
           ingredients={ingredients}
           isLoading={isSubmitting}

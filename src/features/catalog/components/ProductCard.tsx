@@ -3,7 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StockStatusBadge, InventoryTypeBadge } from "./Badges";
 import type { ProductResponse } from "@/types/catalog.types";
-import { UtensilsCrossed, Eye, Edit, Trash2, Tags, Layers, DollarSign, Boxes } from "lucide-react";
+import { InventoryType } from "@/types/enums";
+import { cn } from "@/utils/cn";
+import { UtensilsCrossed, Eye, Edit, Trash2, Tags, Layers, DollarSign, Boxes, ChefHat } from "lucide-react";
 
 interface ProductCardProps {
   product: ProductResponse;
@@ -133,11 +135,29 @@ export function ProductCard({
               variant="ghost"
               size="sm"
               onClick={() => onUpdateStock(product)}
-              className="h-8 px-2 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30"
-              title="Cập nhật tồn kho theo chi nhánh"
+              className={cn(
+                "h-8 px-2 text-xs",
+                product.inventoryType === InventoryType.MadeToOrder
+                  ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30"
+                  : "text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30"
+              )}
+              title={
+                product.inventoryType === InventoryType.MadeToOrder
+                  ? "Món chế biến (MadeToOrder) - Xem công thức định lượng (Recipe / BOM)"
+                  : "Cập nhật tồn kho theo chi nhánh"
+              }
             >
-              <Boxes className="h-3.5 w-3.5 mr-1" />
-              Kho
+              {product.inventoryType === InventoryType.MadeToOrder ? (
+                <>
+                  <ChefHat className="h-3.5 w-3.5 mr-1" />
+                  Recipe
+                </>
+              ) : (
+                <>
+                  <Boxes className="h-3.5 w-3.5 mr-1" />
+                  Kho
+                </>
+              )}
             </Button>
           )}
           <Button

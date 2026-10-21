@@ -83,6 +83,7 @@ export interface ProductResponse {
   unitPrice?: number | null;
   currency?: string | null;
   stockStatus: StockStatus;
+  isRecommended?: boolean;
   primaryImage?: ProductImageResponse | null;
 }
 
@@ -134,8 +135,24 @@ export interface ProductBranchPriceResponse {
   updatedAt: string;
 }
 
+// Đối chiếu: API.Contract.DTOs.Catalog.Products.CreateProductPriceRequest
+export interface CreateProductPriceRequest {
+  productPublicId: string;
+  branchPublicId: string;
+  unitPrice: number;
+  currency?: Currency;
+}
+
 // Đối chiếu: API.Contract.DTOs.Catalog.Products.UpdateProductBranchStockRequest
 export interface UpdateProductBranchStockRequest {
+  quantityOnHand: number;
+  reorderLevel?: number | null;
+}
+
+// Đối chiếu: API.Contract.DTOs.Catalog.Products.CreateProductStockRequest
+export interface CreateProductStockRequest {
+  productPublicId: string;
+  branchPublicId: string;
   quantityOnHand: number;
   reorderLevel?: number | null;
 }
