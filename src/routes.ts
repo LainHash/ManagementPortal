@@ -14,5 +14,8 @@ export default [
 
   // Inventory Routes
   route("ingredients", "routes/inventory/ingredients.tsx"),
+
+  // Communication Routes
+  route("contact-messages", "routes/communication/contact-messages.tsx"),
 ] satisfies RouteConfig;
 

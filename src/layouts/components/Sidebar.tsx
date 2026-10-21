@@ -18,6 +18,7 @@ import {
   ChefHat,
   Scale,
   Wheat,
+  MessageSquareText,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar } from "@/components/ui/avatar";
@@ -119,6 +120,12 @@ export function Sidebar({ isMobileOpen = false, onCloseMobile }: SidebarProps) {
           label: "Khu vực & Bàn",
           href: "/tables",
           icon: MapPin,
+        },
+        {
+          label: "Tin nhắn liên hệ",
+          href: "/contact-messages",
+          icon: MessageSquareText,
+          badge: "Contact",
         },
       ],
     },

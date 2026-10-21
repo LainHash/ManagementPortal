@@ -55,4 +55,8 @@ export const API_ENDPOINTS = {
     AREAS: "/territory/Areas",
     TABLES: "/territory/RestaurantTables",
   },
+  COMMUNICATION: {
+    CONTACT_MESSAGES: "/communication/contact-messages",
+    CONTACT_MESSAGE_DETAIL: (id: string) => `/communication/contact-messages/${id}`,
+  },
 } as const;
