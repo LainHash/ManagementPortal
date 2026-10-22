@@ -5,7 +5,7 @@ import { StockStatusBadge, InventoryTypeBadge } from "./Badges";
 import type { ProductResponse } from "@/types/catalog.types";
 import { InventoryType } from "@/types/enums";
 import { cn } from "@/utils/cn";
-import { UtensilsCrossed, Eye, Edit, Trash2, Tags, Layers, DollarSign, Boxes, ChefHat } from "lucide-react";
+import { UtensilsCrossed, Eye, Edit, Trash2, Tags, Layers, DollarSign, Boxes, ChefHat, Star, Loader2 } from "lucide-react";
 
 interface ProductCardProps {
   product: ProductResponse;
@@ -14,6 +14,8 @@ interface ProductCardProps {
   onDelete: (product: ProductResponse) => void;
   onUpdatePrice?: (product: ProductResponse) => void;
   onUpdateStock?: (product: ProductResponse) => void;
+  onToggleRecommend?: (product: ProductResponse) => void;
+  isTogglingRecommend?: boolean;
 }
 
 export function ProductCard({
@@ -23,6 +25,8 @@ export function ProductCard({
   onDelete,
   onUpdatePrice,
   onUpdateStock,
+  onToggleRecommend,
+  isTogglingRecommend,
 }: ProductCardProps) {
   const imageUrl = product.primaryImage?.image?.url;
   const formatPrice = (price?: number | null, currency?: string | null) => {
@@ -52,11 +56,37 @@ export function ProductCard({
           <StockStatusBadge status={product.stockStatus} />
         </div>
 
-        {/* Top-right Unit badge */}
-        <div className="absolute top-2.5 right-2.5">
+        {/* Top-right Unit badge and Star Toggle Button */}
+        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-10">
           <span className="rounded-md bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-slate-700 shadow-xs backdrop-blur-xs dark:bg-slate-900/90 dark:text-slate-200">
             /{product.unitSymbol || "Phần"}
           </span>
+          {onToggleRecommend && (
+            <button
+              type="button"
+              disabled={isTogglingRecommend}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleRecommend(product);
+              }}
+              className={`flex h-7 w-7 items-center justify-center rounded-full shadow-sm backdrop-blur-md transition-all active:scale-90 ${
+                product.isRecommended
+                  ? "bg-amber-400 text-white hover:bg-amber-500 ring-2 ring-white/80 dark:ring-slate-900/80 shadow-amber-500/30"
+                  : "bg-white/90 text-slate-400 hover:text-amber-500 hover:bg-white dark:bg-slate-900/90 dark:text-slate-400 dark:hover:text-amber-400"
+              }`}
+              title={product.isRecommended ? "Bỏ đánh dấu món nổi bật" : "Đánh dấu món nổi bật"}
+            >
+              {isTogglingRecommend ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Star
+                  className={`h-3.5 w-3.5 ${
+                    product.isRecommended ? "fill-white text-white" : ""
+                  }`}
+                />
+              )}
+            </button>
+          )}
         </div>
       </div>
 

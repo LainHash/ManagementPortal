@@ -1,7 +1,7 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { StockStatus, InventoryType, UnitType } from "@/types/enums";
-import { CheckCircle2, AlertTriangle, XCircle, ChefHat, Package, Scale, Beaker, Hash } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, ChefHat, Package, Scale, Beaker, Hash, Star } from "lucide-react";
 
 export function StockStatusBadge({ status }: { status?: StockStatus | null }) {
   switch (status) {
@@ -78,4 +78,14 @@ export function UnitTypeBadge({ type }: { type: UnitType }) {
         </span>
       );
   }
+}
+
+export function RecommendedBadge({ isRecommended }: { isRecommended?: boolean }) {
+  if (!isRecommended) return null;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-400/20">
+      <Star className="h-3 w-3 fill-amber-400 text-amber-500" />
+      Nổi bật
+    </span>
+  );
 }

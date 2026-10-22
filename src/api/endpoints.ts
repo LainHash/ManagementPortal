@@ -35,6 +35,7 @@ export const API_ENDPOINTS = {
     PRODUCT_BRANCH_STOCK: (productId: string, branchId: string) => `/catalog/products/${productId}/branches/${branchId}/stock`,
     PRODUCT_CREATE_PRICE: "/catalog/products/price",
     PRODUCT_CREATE_STOCK: "/catalog/products/stock",
+    PRODUCT_TOGGLE_RECOMMEND: (id: string) => `/catalog/products/${id}/toggle-recommend`,
 
     CATEGORIES: "/catalog/categories",
     CATEGORY_DETAIL: (id: string) => `/catalog/categories/${id}`,

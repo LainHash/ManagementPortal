@@ -10,9 +10,10 @@ import { ProductFormModal } from "@/features/catalog/components/ProductFormModal
 import { ProductDetailModal } from "@/features/catalog/components/ProductDetailModal";
 import { ProductBranchPriceModal } from "@/features/catalog/components/ProductBranchPriceModal";
 import { ProductBranchStockModal } from "@/features/catalog/components/ProductBranchStockModal";
+import { ProductRecommendModal } from "@/features/catalog/components/ProductRecommendModal";
 import { DeleteConfirmModal } from "@/features/catalog/components/DeleteConfirmModal";
 import { CatalogAlert, type AlertState } from "@/features/catalog/components/CatalogAlert";
-import { StockStatusBadge, InventoryTypeBadge } from "@/features/catalog/components/Badges";
+import { StockStatusBadge, InventoryTypeBadge, RecommendedBadge } from "@/features/catalog/components/Badges";
 import { useCatalogOptions } from "@/features/catalog/hooks/useCatalogOptions";
 import { StockStatus, InventoryType } from "@/types/enums";
 import type {
@@ -37,6 +38,7 @@ import {
   DollarSign,
   Boxes,
   ChefHat,
+  Star,
 } from "lucide-react";
 
 export function meta() {
@@ -63,6 +65,7 @@ export default function ProductsPage() {
   const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [selectedStockStatus, setSelectedStockStatus] = useState<string>("");
   const [selectedInventoryType, setSelectedInventoryType] = useState<string>("");
+  const [onlyRecommended, setOnlyRecommended] = useState<boolean>(false);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -92,6 +95,10 @@ export default function ProductsPage() {
   const [isStockModalOpen, setIsStockModalOpen] = useState<boolean>(false);
   const [stockModalProduct, setStockModalProduct] = useState<ProductResponse | null>(null);
 
+  const [isRecommendModalOpen, setIsRecommendModalOpen] = useState<boolean>(false);
+  const [recommendModalProduct, setRecommendModalProduct] = useState<ProductResponse | null>(null);
+  const [togglingRecommendId, setTogglingRecommendId] = useState<string | null>(null);
+
   // Fetch products
   const fetchProducts = useCallback(async () => {
     setIsLoading(true);
@@ -103,12 +110,16 @@ export default function ProductsPage() {
         branchId: selectedBranch || undefined,
         categoryId: selectedCategory || undefined,
         brandId: selectedBrand || undefined,
+        isRecommended: onlyRecommended ? true : undefined,
       });
 
       if (res?.data) {
         let list = res.data;
 
-        // In-memory filter fallback for stock status & inventory type if backend doesn't filter directly
+        // In-memory filter fallback for stock status, inventory type & recommended
+        if (onlyRecommended) {
+          list = list.filter((p) => p.isRecommended === true);
+        }
         if (selectedStockStatus) {
           list = list.filter((p) => p.stockStatus === selectedStockStatus);
         }
@@ -142,11 +153,60 @@ export default function ProductsPage() {
     selectedBrand,
     selectedStockStatus,
     selectedInventoryType,
+    onlyRecommended,
   ]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  // Handle Toggle Recommended Product
+  const handleToggleRecommend = async (prod: ProductResponse) => {
+    // If a branch is selected in filter, toggle directly for that branch
+    const branchToUse = selectedBranch || (branches.length === 1 ? branches[0].id : "");
+
+    if (branchToUse) {
+      setTogglingRecommendId(prod.id);
+      try {
+        await catalogApi.products.toggleRecommend(prod.id, branchToUse);
+
+        // Optimistic UI update
+        setProducts((prev) =>
+          prev.map((p) =>
+            p.id === prod.id ? { ...p, isRecommended: !p.isRecommended } : p
+          )
+        );
+
+        const branchObj = branches.find((b) => b.id === branchToUse);
+        const branchName = branchObj ? ` tại chi nhánh ${branchObj.city}` : "";
+        setAlert({
+          type: "success",
+          message: prod.isRecommended
+            ? `Đã bỏ đánh dấu nổi bật cho món "${prod.name}"${branchName}.`
+            : `Đã đánh dấu món "${prod.name}" là món nổi bật (Recommended)${branchName}!`,
+        });
+      } catch (err: any) {
+        setAlert({
+          type: "error",
+          message:
+            err?.response?.data?.message ||
+            err?.message ||
+            "Không thể cập nhật trạng thái món nổi bật.",
+        });
+      } finally {
+        setTogglingRecommendId(null);
+      }
+    } else {
+      // If no branch is selected and there are multiple branches, open modal to let user choose branch
+      setRecommendModalProduct(prod);
+      setIsRecommendModalOpen(true);
+    }
+  };
+
+  const handleRecommendSuccess = (msg: string) => {
+    setAlert({ type: "success", message: msg });
+    fetchProducts();
+  };
 
   // Handle Form Submit (Create / Edit)
   const handleFormSubmit = async (
@@ -312,6 +372,28 @@ export default function ProductsPage() {
               </div>
 
               <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <Button
+                  variant={onlyRecommended ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setOnlyRecommended(!onlyRecommended);
+                    setCurrentPage(1);
+                  }}
+                  className={`h-10 text-xs gap-1.5 transition-all ${
+                    onlyRecommended
+                      ? "bg-amber-500 hover:bg-amber-600 text-white border-amber-500 shadow-sm shadow-amber-500/20"
+                      : "text-slate-600 hover:text-amber-600 hover:border-amber-200 dark:text-slate-300 dark:hover:text-amber-400"
+                  }`}
+                  title="Lọc chỉ các món ăn nổi bật (Recommended)"
+                >
+                  <Star
+                    className={`h-4 w-4 ${
+                      onlyRecommended ? "fill-white text-white" : "text-amber-500 fill-amber-400"
+                    }`}
+                  />
+                  <span>Món nổi bật</span>
+                </Button>
+
                 <Button
                   variant="outline"
                   size="sm"
@@ -503,6 +585,8 @@ export default function ProductsPage() {
                 onDelete={handleOpenDelete}
                 onUpdatePrice={handleOpenUpdatePrice}
                 onUpdateStock={handleOpenUpdateStock}
+                onToggleRecommend={handleToggleRecommend}
+                isTogglingRecommend={togglingRecommendId === product.id}
               />
             ))}
           </div>
@@ -515,6 +599,9 @@ export default function ProductsPage() {
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-900/60 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                   <tr>
+                    <th className="w-12 px-3 py-3.5 text-center" title="Món nổi bật (Recommended)">
+                      <Star className="h-4 w-4 mx-auto text-amber-500 fill-amber-400" />
+                    </th>
                     <th className="px-4 py-3.5">Món ăn / Mặt hàng</th>
                     <th className="px-4 py-3.5">Danh mục</th>
                     <th className="px-4 py-3.5">Thương hiệu</th>
@@ -531,6 +618,35 @@ export default function ProductsPage() {
                       key={prod.id}
                       className="hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors"
                     >
+                      <td className="w-12 px-3 py-3 text-center">
+                        <button
+                          type="button"
+                          disabled={togglingRecommendId === prod.id}
+                          onClick={() => handleToggleRecommend(prod)}
+                          className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition-all transform active:scale-90 ${
+                            prod.isRecommended
+                              ? "bg-amber-50 text-amber-500 hover:bg-amber-100 dark:bg-amber-950/50 dark:text-amber-400 dark:hover:bg-amber-900/60 shadow-xs ring-1 ring-amber-400/30"
+                              : "text-slate-300 hover:text-amber-500 hover:bg-slate-100 dark:text-slate-600 dark:hover:bg-slate-800"
+                          }`}
+                          title={
+                            prod.isRecommended
+                              ? "Món nổi bật (Bấm để bỏ đánh dấu)"
+                              : "Đánh dấu món nổi bật (Recommended)"
+                          }
+                        >
+                          {togglingRecommendId === prod.id ? (
+                            <RotateCcw className="h-4 w-4 animate-spin text-amber-500" />
+                          ) : (
+                            <Star
+                              className={`h-4 w-4 transition-transform duration-200 hover:scale-125 ${
+                                prod.isRecommended
+                                  ? "fill-amber-400 text-amber-500"
+                                  : ""
+                              }`}
+                            />
+                          )}
+                        </button>
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
@@ -545,12 +661,15 @@ export default function ProductsPage() {
                             )}
                           </div>
                           <div>
-                            <button
-                              onClick={() => handleOpenDetail(prod)}
-                              className="font-semibold text-slate-900 hover:text-indigo-600 transition-colors text-left dark:text-white dark:hover:text-indigo-400 cursor-pointer"
-                            >
-                              {prod.name}
-                            </button>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                onClick={() => handleOpenDetail(prod)}
+                                className="font-semibold text-slate-900 hover:text-indigo-600 transition-colors text-left dark:text-white dark:hover:text-indigo-400 cursor-pointer"
+                              >
+                                {prod.name}
+                              </button>
+                              <RecommendedBadge isRecommended={prod.isRecommended} />
+                            </div>
                             {prod.description && (
                               <p className="text-xs text-slate-400 line-clamp-1 max-w-xs">
                                 {prod.description}
@@ -579,6 +698,32 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={togglingRecommendId === prod.id}
+                            onClick={() => handleToggleRecommend(prod)}
+                            className={`h-8 w-8 ${
+                              prod.isRecommended
+                                ? "text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40"
+                                : "text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+                            }`}
+                            title={
+                              prod.isRecommended
+                                ? "Bỏ đánh dấu món nổi bật"
+                                : "Đánh dấu món nổi bật (Recommended)"
+                            }
+                          >
+                            {togglingRecommendId === prod.id ? (
+                              <RotateCcw className="h-4 w-4 animate-spin text-amber-500" />
+                            ) : (
+                              <Star
+                                className={`h-4 w-4 ${
+                                  prod.isRecommended ? "fill-amber-400 text-amber-500" : ""
+                                }`}
+                              />
+                            )}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -745,6 +890,18 @@ export default function ProductsPage() {
           branches={branches}
           initialBranchId={selectedBranch}
           onSuccess={handleStockSuccess}
+        />
+
+        <ProductRecommendModal
+          isOpen={isRecommendModalOpen}
+          onClose={() => {
+            setIsRecommendModalOpen(false);
+            setRecommendModalProduct(null);
+          }}
+          product={recommendModalProduct}
+          branches={branches}
+          selectedBranchId={selectedBranch}
+          onSuccess={handleRecommendSuccess}
         />
 
         <DeleteConfirmModal

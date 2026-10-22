@@ -82,6 +82,16 @@ export const catalogApi = {
     ): Promise<Result<ProductBranchStockResponse>> => {
       return axiosClient.post(API_ENDPOINTS.CATALOG.PRODUCT_CREATE_STOCK, body);
     },
+    toggleRecommend: async (
+      productId: string,
+      branchId: string
+    ): Promise<Result<void>> => {
+      return axiosClient.post(
+        API_ENDPOINTS.CATALOG.PRODUCT_TOGGLE_RECOMMEND(productId),
+        { branchId },
+        { params: { branchId } }
+      );
+    },
   },
 
   // --------------------------------------------------------------------------

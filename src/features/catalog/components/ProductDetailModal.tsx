@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { catalogApi } from "../api/catalog.api";
-import { StockStatusBadge, InventoryTypeBadge } from "./Badges";
+import { StockStatusBadge, InventoryTypeBadge, RecommendedBadge } from "./Badges";
 import type { ProductDetailResponse, ProductResponse } from "@/types/catalog.types";
 import { InventoryType } from "@/types/enums";
 import {
@@ -121,7 +121,8 @@ export function ProductDetailModal({
           )}
 
           {/* Quick status overlays */}
-          <div className="absolute top-3 left-3 flex gap-2">
+          <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+            <RecommendedBadge isRecommended={currentData.isRecommended} />
             <StockStatusBadge status={currentData.stockStatus} />
             <InventoryTypeBadge type={currentData.inventoryType} />
           </div>
