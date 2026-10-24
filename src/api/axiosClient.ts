@@ -6,7 +6,9 @@ import { STORAGE_KEYS } from "@/constants/app.constants";
 import { API_ENDPOINTS } from "./endpoints";
 
 const rawBaseUrl =
-  import.meta.env.VITE_PUBLIC_API_BASE_URL || "http://localhost:5000";
+  import.meta.env.VITE_PUBLIC_API_BASE_URL ||
+  process.env.VITE_PUBLIC_API_BASE_URL ||
+  "http://localhost:5000";
 // RestaurantAPI hosts its endpoints at /api/... or /...
 const resolvedBaseUrl = rawBaseUrl.endsWith("/api")
   ? rawBaseUrl
