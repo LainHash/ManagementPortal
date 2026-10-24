@@ -5,7 +5,8 @@ import axios, {
 import { STORAGE_KEYS } from "@/constants/app.constants";
 import { API_ENDPOINTS } from "./endpoints";
 
-const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const rawBaseUrl =
+  import.meta.env.VITE_PUBLIC_API_BASE_URL || "http://localhost:5000";
 // RestaurantAPI hosts its endpoints at /api/... or /...
 const resolvedBaseUrl = rawBaseUrl.endsWith("/api")
   ? rawBaseUrl
@@ -40,7 +41,7 @@ axiosClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // 2. Response Interceptor: Handle Refresh Token on 401
@@ -104,7 +105,7 @@ axiosClient.interceptors.response.use(
         const response = await axios.post(
           `${resolvedBaseUrl}${API_ENDPOINTS.AUTH.REFRESH}`,
           { refreshToken },
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         const newAccessToken = response.data?.data?.token;
@@ -113,7 +114,7 @@ axiosClient.interceptors.response.use(
           if (response.data?.data?.refreshToken) {
             localStorage.setItem(
               STORAGE_KEYS.REFRESH_TOKEN,
-              response.data.data.refreshToken
+              response.data.data.refreshToken,
             );
           }
           processQueue(null, newAccessToken);
@@ -137,7 +138,7 @@ axiosClient.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosClient;
